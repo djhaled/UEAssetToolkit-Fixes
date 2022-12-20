@@ -41,9 +41,6 @@
 *.VC.db
 *.VC.opendb
 
-# Binary Files
-**/Binaries/*
-
 # Builds
 **/Build/*
 

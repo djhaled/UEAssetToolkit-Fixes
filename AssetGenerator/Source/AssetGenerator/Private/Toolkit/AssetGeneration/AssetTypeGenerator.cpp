@@ -50,6 +50,7 @@ UAssetTypeGenerator::UAssetTypeGenerator() {
 	this->bAssetChanged = false;
 	this->bHasAssetEverBeenChanged = false;
 	this->bIsGeneratingPublicProject = false;
+	this->bSkipAnim = true;
 }
 
 void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject) {
@@ -67,10 +68,30 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 	PostInitializeAssetGenerator();
 }
 
+bool UAssetTypeGenerator::IsDumbAsset()
+{
+	if (GetClass()->GetName() == "AnimBlueprintGenerator"
+		|| GetClass()->GetName() == "BlendSpaceGenerator"
+			/*|| GetAssetName().ToString().Contains("AIC_")*/ /*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
+			&& bSkipAnim)
+	{
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Skipping asset %s"), *GetAssetName().ToString());
+		return true;
+	}
+	return false;
+}
+
 void UAssetTypeGenerator::ConstructAssetAndPackage() {
 	UPackage* ExistingPackage = FindPackage(NULL, *PackageName.ToString());
 	if (!ExistingPackage) {
-		ExistingPackage = LoadPackage(NULL, *PackageName.ToString(), LOAD_Quiet);
+		if (!IsDumbAsset()) {
+			ExistingPackage = LoadPackage(NULL, *PackageName.ToString(), LOAD_Quiet);	
+		} else
+		{
+			// We don't want to continue the rest of this function where it thinks the package already exists because
+			// it may not, and we want to make sure that the rest of the package is created.
+			return;
+		}
 	}
 		
 	if (ExistingPackage == NULL) {
@@ -145,13 +166,12 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 		this->ConstructAssetAndPackage();
 	}
 	if (CurrentStage == EAssetGenerationStage::DATA_POPULATION) {
-		this->PopulateAssetWithData();
+		/*if (AssetObject != NULL)*/ this->PopulateAssetWithData();
 	}
 	if (CurrentStage == EAssetGenerationStage::CDO_FINALIZATION) {
-		this->FinalizeAssetCDO();
+		/*if (AssetObject != NULL)*/ this->FinalizeAssetCDO();
 	}
 	if (CurrentStage == EAssetGenerationStage::PRE_FINSHED) {
-		// TODO: Hackfix on top of previous hackfix, does the job though. Needs a better solution.
 		if (AssetObject != NULL) this->PreFinishAssetGeneration();
 	}
 		
@@ -163,7 +183,9 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 		TArray<UPackage*> PackagesToSave;
 		PackagesToSave.Add(AssetPackage);
 		GetAdditionalPackagesToSave(PackagesToSave);
-		UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, false);
+		if (!IsDumbAsset()) {
+			UEditorLoadingAndSavingUtils::SavePackages(PackagesToSave, false);
+		}
 		
 		this->bAssetChanged = false;
 		this->bHasAssetEverBeenChanged = true;

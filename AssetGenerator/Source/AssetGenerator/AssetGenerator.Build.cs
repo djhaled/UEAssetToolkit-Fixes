@@ -21,6 +21,7 @@ public class AssetGenerator : ModuleRules
             "BlueprintGraph",
             "KismetCompiler",
             "AssetRegistry",
+            "AssetTools",
             "SlateCore", "Slate", "UMG",
             "Projects",
             "Landscape",

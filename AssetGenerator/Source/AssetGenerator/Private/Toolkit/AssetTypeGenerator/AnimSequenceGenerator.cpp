@@ -80,14 +80,16 @@ void UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 
 	ImportUI->AnimSequenceImportData = NewObject<UFbxAnimSequenceImportData>(ImportUI, NAME_None, RF_NoFlags);
 	ImportUI->AnimSequenceImportData->bRemoveRedundantKeys = true;
-
-	const int32 ExportedFrameRate = GetAssetData()->GetIntegerField(TEXT("FrameRate"));
-	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = false;
-	ImportUI->AnimSequenceImportData->CustomSampleRate = ExportedFrameRate;
-
+	
 	const int32 NumFrames = GetAssetData()->GetIntegerField(TEXT("NumFrames"));
 	ImportUI->AnimSequenceImportData->AnimationLength = EFBXAnimationLengthImportType::FBXALIT_SetRange;
 	ImportUI->AnimSequenceImportData->FrameImportRange = FInt32Interval(0, NumFrames - 1);
+	
+	const int32 SequenceLength = GetAssetData()->GetIntegerField(TEXT("SequenceLength"));
+	int32 RateScale = GetAssetData()->GetIntegerField(TEXT("RateScale"));
+	if (RateScale == 0) RateScale = 1;
+	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = true;
+	ImportUI->AnimSequenceImportData->CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength);
 }
 
 void UAnimSequenceGenerator::PopulateAnimationProperties(UAnimSequence* Asset) {

@@ -103,9 +103,12 @@ void UPropertySerializer::DeserializePropertyValue(FProperty* Property, const TS
 	//Handle statically sized array properties
 	if (Property->ArrayDim != 1) {
 		const TArray<TSharedPtr<FJsonValue>>& ArrayElements = JsonValue->AsArray();
-		check(ArrayElements.Num() == Property->ArrayDim);
+		//check(ArrayElements.Num() == Property->ArrayDim);
 		
 		for (int32 ArrayIndex = 0; ArrayIndex < Property->ArrayDim; ArrayIndex++) {
+			if (ArrayIndex >= ArrayElements.Num()) {
+				continue;
+			}
 			uint8* ArrayPropertyValue = (uint8*) Value + Property->ElementSize * ArrayIndex;
 			const TSharedRef<FJsonValue> ArrayJsonValue = ArrayElements[ArrayIndex].ToSharedRef();
 			
@@ -532,6 +535,9 @@ bool UPropertySerializer::ComparePropertyValues(FProperty* Property, const TShar
 		check(ArrayElements.Num() == Property->ArrayDim);
 		
 		for (int32 ArrayIndex = 0; ArrayIndex < Property->ArrayDim; ArrayIndex++) {
+			if (ArrayIndex >= ArrayElements.Num()) {
+				return false;
+			}
 			const uint8* ArrayPropertyValue = (const uint8*) CurrentValue + Property->ElementSize * ArrayIndex;
 			const TSharedRef<FJsonValue> ArrayJsonValue = ArrayElements[ArrayIndex].ToSharedRef();
 			

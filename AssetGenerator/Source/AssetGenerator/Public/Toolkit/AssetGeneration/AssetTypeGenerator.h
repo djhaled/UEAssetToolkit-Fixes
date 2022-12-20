@@ -44,6 +44,7 @@ private:
 	bool bHasAssetEverBeenChanged;
 	bool bIsGeneratingPublicProject;
 	bool bIsStageNotOverriden;
+	bool bSkipAnim;
 	
 	UPROPERTY()
     UObjectHierarchySerializer* ObjectSerializer;
@@ -104,6 +105,8 @@ protected:
 	virtual void GetAdditionalPackagesToSave(TArray<UPackage*>& OutPackages) {};
 
 	static void MoveToTransientPackageAndRename(UObject* Object);
+
+	bool IsDumbAsset();
 public:
 	UAssetTypeGenerator();
 
