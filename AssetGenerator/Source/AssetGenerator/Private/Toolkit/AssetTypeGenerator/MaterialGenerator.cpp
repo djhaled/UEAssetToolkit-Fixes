@@ -254,7 +254,7 @@ UClass* GetTextureSampleParameterClassForTexture(UTexture* Texture) {
 	if (Texture->IsA(UTexture2DArray::StaticClass())) {
 		return UMaterialExpressionTextureSampleParameter2DArray::StaticClass();
 	}
-	checkf(0, TEXT("Unsupported Texture Class: %s"), *Texture->GetPathName());
+	//checkf(0, TEXT("Unsupported Texture Class: %s"), *Texture->GetPathName());
 	return NULL;
 }
 
@@ -415,11 +415,14 @@ void UMaterialGenerator::SpawnNewMaterialParameterNodes(UMaterial* Material, FMa
 	for (const TMaterialParameter<UTexture*> NewTextureParameter : LayoutChangeInfo.NewTextureParameters) {
 		if (NewTextureParameter.ParameterInfo.Association == GlobalParameter && NewTextureParameter.ParameterValue) {
 			UClass* ExpressionClass = GetTextureSampleParameterClassForTexture(NewTextureParameter.ParameterValue);
-			UMaterialExpressionTextureSampleParameter* Expression = SpawnMaterialExpression<UMaterialExpressionTextureSampleParameter>(Material, ExpressionClass);
+			// Sometimes the expression type is NULL when it thinks that a TextureRenderTarget2D is a texture (when it actually is not)
+			if (ExpressionClass != NULL) {
+				UMaterialExpressionTextureSampleParameter* Expression = SpawnMaterialExpression<UMaterialExpressionTextureSampleParameter>(Material, ExpressionClass);
 			
-			Expression->SetParameterName(NewTextureParameter.ParameterInfo.Name);
-			Expression->Texture = NewTextureParameter.ParameterValue;
-			Expression->AutoSetSampleType();
+				Expression->SetParameterName(NewTextureParameter.ParameterInfo.Name);
+				Expression->Texture = NewTextureParameter.ParameterValue;
+				Expression->AutoSetSampleType();	
+			}
 		}
 	}
 

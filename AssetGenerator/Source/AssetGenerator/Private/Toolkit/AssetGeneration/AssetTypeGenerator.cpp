@@ -166,10 +166,10 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 		this->ConstructAssetAndPackage();
 	}
 	if (CurrentStage == EAssetGenerationStage::DATA_POPULATION) {
-		/*if (AssetObject != NULL)*/ this->PopulateAssetWithData();
+		if (!IsDumbAsset()) this->PopulateAssetWithData();
 	}
 	if (CurrentStage == EAssetGenerationStage::CDO_FINALIZATION) {
-		/*if (AssetObject != NULL)*/ this->FinalizeAssetCDO();
+		if (!IsDumbAsset()) this->FinalizeAssetCDO();
 	}
 	if (CurrentStage == EAssetGenerationStage::PRE_FINSHED) {
 		if (AssetObject != NULL) this->PreFinishAssetGeneration();
