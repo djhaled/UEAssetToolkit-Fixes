@@ -39,7 +39,7 @@ Assets that you MUST generate in-editor:
 
 ## Tips
 - If any specific asset type/package/directory is giving you a massive headache and you want to skip it (`BlacklistPackageNames` doesn't work half of the time), edit line `73` in `AssetTypeGenerator.cpp`.
-- When you are generating in-editor, you almost certainly almost want to be running in debug mode so that your IDE will show a full stack breakpoint on the line that the exception occurs, so you can see the values of each set of properties in each stack.
+- When you are generating in-editor, you almost certainly almost want to be running in debug mode so that your IDE will show a full stack breakpoint on the line that the exception occurs, so you can see the values of each set of properties in each stack. It is ideal to even download the engine editor symbols, which are actually 10x smaller than the size of EGS store says (silly bug). So for 4.27 this was 3.5GBs.
 - The main "logic" occurs in `UAssetTypeGenerator::AdvanceGenerationState()`, so you will probably be stepping through this in debug mode to see exactly what is going on, if you are crashing for an unexplainable reason.
 - If you are getting crashes with blueprint interfaces, it is almost certainly during the `UBlueprintGenerator::PostConstructOrUpdateAsset` stage, so temporarily comment out the lines `97`-`100` for that asset(s).
 - Be careful about the `RowStruct` property in the serialized JSON for `DataTable` assets. This can quite easily be trying to reference one that doesn't exist (as it is nativized or something), and will cause really annoying crashes as they can take ages to diagnose.
