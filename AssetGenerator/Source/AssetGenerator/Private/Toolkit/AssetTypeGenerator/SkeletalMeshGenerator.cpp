@@ -71,7 +71,13 @@ void USkeletalMeshGenerator::ReimportSkeletalMeshSource(USkeletalMesh* Asset) {
 	
 	SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
 	SkeletalMeshFactory->SetDetectImportTypeOnImport(false);
-	SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, GetAssetName(), Asset->GetPackage());
+	SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, GetAssetName(), Asset->
+#if ENGINE_MINOR_VERSION == 25
+	GetOutermost() 
+#else
+	GetPackage()
+#endif
+	);
 	
 	FString AssetFbxFilePath;
 	if (!IsGeneratingPublicProject()) {
