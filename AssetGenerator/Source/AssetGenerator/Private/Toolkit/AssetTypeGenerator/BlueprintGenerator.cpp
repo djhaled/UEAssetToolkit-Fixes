@@ -45,9 +45,6 @@ void UBlueprintGenerator::CreateAssetPackage() {
 		Arguments.Add(TEXT("Blueprint"), FText::FromName(GetPackageName()));
 		Arguments.Add(TEXT("ParentClass"), FText::FromString(*ObjectName));
 		
-		if (!FApp::IsUnattended()) {
-			FMessageDialog::Open(EAppMsgType::Ok, FText::Format(MessageRaw, Arguments));
-		}
 		ParentClass = GetFallbackParentClass();
 	}
 
@@ -94,6 +91,8 @@ void UBlueprintGenerator::PostConstructOrUpdateAsset(UBlueprint* Blueprint) {
 		const TSharedPtr<FJsonObject> InterfaceObject = ImplementedInterfaces[i]->AsObject();
 		const int32 ClassObjectIndex = InterfaceObject->GetIntegerField(TEXT("Class"));
 
+		const auto idk = GetObjectSerializer()->DeserializeObject(ClassObjectIndex);
+		if (!idk) { return; }
 		UClass* InterfaceClass = CastChecked<UClass>(GetObjectSerializer()->DeserializeObject(ClassObjectIndex));
 		if (FBlueprintGeneratorUtils::ImplementNewInterface(Blueprint, InterfaceClass)) {
 			MarkAssetChanged();

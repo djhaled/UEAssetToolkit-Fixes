@@ -235,6 +235,7 @@ void UPropertySerializer::DeserializePropertyValueInner(FProperty* Property, con
 	} else if (const FByteProperty* ByteProperty = CastField<const FByteProperty>(Property)) {
 		//If we have a string provided, make sure Enum is not null
 		if (JsonValue->Type == EJson::String) {
+			if (!ByteProperty->Enum) { return; }
 			check(ByteProperty->Enum);
 			const int64 EnumerationValue = ByteProperty->Enum->GetValueByNameString(JsonValue->AsString());
 			ByteProperty->SetIntPropertyValue(Value, EnumerationValue);

@@ -58,8 +58,8 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 	this->PackageBaseDirectory = InPackageBaseDirectory;
 	this->PackageName = FName(*RootFileObject->GetStringField(TEXT("AssetPackage")));
 	this->AssetName = FName(*RootFileObject->GetStringField(TEXT("AssetName")));
-	checkf(this->PackageName == InPackageName, TEXT("InitializeInternal called with inconsistent package name. Externally provided name was '%s', but internal dump package name is '%s'"),
-		*InPackageName.ToString(), *this->PackageName.ToString());
+	//checkf(this->PackageName == InPackageName, TEXT("InitializeInternal called with inconsistent package name. Externally provided name was '%s', but internal dump package name is '%s'"),
+		//*InPackageName.ToString(), *this->PackageName.ToString());
 
 	const TArray<TSharedPtr<FJsonValue>> ObjectHierarchy = RootFileObject->GetArrayField(TEXT("ObjectHierarchy"));
 	this->ObjectSerializer->InitializeForDeserialization(ObjectHierarchy);

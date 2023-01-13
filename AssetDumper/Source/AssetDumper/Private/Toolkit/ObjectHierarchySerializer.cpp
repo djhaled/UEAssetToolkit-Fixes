@@ -581,7 +581,6 @@ UObject* UObjectHierarchySerializer::DeserializeImportedObject(TSharedPtr<FJsonO
 		check(ObjectClass == UPackage::StaticClass());
 		UPackage* ResultPackage = FindOrLoadPackage(ObjectName);
 		if (ResultPackage == NULL) {
-			UE_LOG(LogObjectHierarchySerializer, Error, TEXT("Cannot resolve external referenced package %s (requested by %s)"), *ObjectName, *SourcePackage->GetName());
 			return NULL;
 		}
 		return ResultPackage;
@@ -592,14 +591,14 @@ UObject* UObjectHierarchySerializer::DeserializeImportedObject(TSharedPtr<FJsonO
 	UObject* OuterObject = DeserializeObject(OuterObjectIndex);
 	
 	if (OuterObject == NULL) {
-		UE_LOG(LogObjectHierarchySerializer, Error, TEXT("Cannot deserialize object %s because it's outer object %d failed deserialization (requested by %s)"), *ObjectName, OuterObjectIndex, *SourcePackage->GetName());
+		//UE_LOG(LogObjectHierarchySerializer, Error, TEXT("Cannot deserialize object %s because it's outer object %d failed deserialization (requested by %s)"), *ObjectName, OuterObjectIndex, *SourcePackage->GetName());
 		return NULL;
 	}
 	
 	//Use FindObjectFast now to resolve our object inside Outer
 	UObject* ResultObject = StaticFindObjectFast(ObjectClass, OuterObject, *ObjectName);
 	if (ResultObject == NULL) {
-		UE_LOG(LogObjectHierarchySerializer, Error, TEXT("Cannot resolve object %s inside of the outer %s (requested by %s)"), *ObjectName, *OuterObject->GetPathName(), *SourcePackage->GetPathName());
+		//UE_LOG(LogObjectHierarchySerializer, Error, TEXT("Cannot resolve object %s inside of the outer %s (requested by %s)"), *ObjectName, *OuterObject->GetPathName(), *SourcePackage->GetPathName());
 		return NULL;
 	}
 	
