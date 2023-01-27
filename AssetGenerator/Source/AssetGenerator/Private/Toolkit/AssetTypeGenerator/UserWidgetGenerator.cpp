@@ -91,7 +91,6 @@ void UUserWidgetGenerator::FinalizeAssetCDO() {
 
 		//Deserialize new animations into the array directly
 		for (const TSharedPtr<FJsonValue>& Animation : Animations) {
-			continue;
 			UObject* AnimationObject = GetObjectSerializer()->DeserializeObject((int32) Animation->AsNumber());
 
 			//Rename animation object because it has the _INST suffix emitted by the blueprint compiler

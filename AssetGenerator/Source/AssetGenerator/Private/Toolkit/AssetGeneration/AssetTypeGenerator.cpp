@@ -70,10 +70,11 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 
 bool UAssetTypeGenerator::IsDumbAsset()
 {
-	if (GetClass()->GetName() == "AnimBlueprintGenerator"
-		|| GetClass()->GetName() == "BlendSpaceGenerator"
-			/*|| GetAssetName().ToString().Contains("AIC_")*/ /*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
-			&& bSkipAnim)
+	return false;
+	if (//GetClass()->GetName() == "AnimBlueprintGenerator"
+		//|| GetClass()->GetName() == "BlendSpaceGenerator"
+		/*|| GetAssetName().ToString().Contains("AIC_")*/ /*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
+		 bSkipAnim)
 	{
 		UE_LOG(LogAssetGenerator, Warning, TEXT("Skipping asset %s"), *GetAssetName().ToString());
 		return true;
@@ -160,7 +161,6 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 	if (CurrentStage == EAssetGenerationStage::FINISHED) {
 		return FGeneratorStateAdvanceResult{CurrentStage, false};
 	}
-	
 	//Dispatch current stage call to the appropriate method
 	if (CurrentStage == EAssetGenerationStage::CONSTRUCTION) {
 		this->ConstructAssetAndPackage();

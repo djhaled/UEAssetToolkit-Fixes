@@ -179,7 +179,7 @@ UObject* UObjectHierarchySerializer::DeserializeObject(int32 Index) {
         return ConstructedObject;
     }
     
-    UE_LOG(LogObjectHierarchySerializer, Fatal, TEXT("Unhandled object type: %s for package %s"), *ObjectType, *SourcePackage->GetPathName());
+    UE_LOG(LogObjectHierarchySerializer, Warning, TEXT("Unhandled object type: %s for package %s"), *ObjectType, *SourcePackage->GetPathName());
     return nullptr;
 }
 
