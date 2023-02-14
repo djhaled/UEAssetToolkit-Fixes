@@ -124,6 +124,7 @@ void UPropertySerializer::DeserializePropertyValueInner(FProperty* Property, con
 	const FSetProperty* SetProperty = CastField<const FSetProperty>(Property);
 	const FArrayProperty* ArrayProperty = CastField<const FArrayProperty>(Property);
 
+
 	if (MapProperty) {
 		FProperty* KeyProperty = MapProperty->KeyProp;
 		FProperty* ValueProperty = MapProperty->ValueProp;
