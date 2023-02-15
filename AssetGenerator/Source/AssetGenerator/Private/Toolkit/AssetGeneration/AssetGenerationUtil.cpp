@@ -2,7 +2,11 @@
 #include "Dom/JsonObject.h"
 #include "Engine/MemberReference.h"
 #include "Toolkit/ObjectHierarchySerializer.h"
+#include "Toolkit/AssetTypeGenerator/BlueprintGenerator.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
+
+
+
 
 void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName& OutCategory, FName& OutSubCategory, UObject*& OutSubCategoryObject, bool& bOutIsWeakPointer, class UObjectHierarchySerializer* ObjectSerializer);
 
@@ -212,6 +216,7 @@ void FAssetGenerationUtil::ConvertPropertyObjectToGraphPinType(const TSharedPtr<
 		bool bIsWeakPointer = false;
 		GetPropertyCategoryInfo(ResultProperty, OutPinType.PinCategory, OutPinType.PinSubCategory, SubCategoryObject, bIsWeakPointer, ObjectSerializer);
 		OutPinType.bIsWeakPointer = bIsWeakPointer;
+		if (!SubCategoryObject) { return; }
 		OutPinType.PinSubCategoryObject = SubCategoryObject;
 	}
 }
@@ -243,13 +248,15 @@ void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName
 		bOutIsWeakPointer = FieldClass->IsChildOf(FWeakObjectProperty::StaticClass());
 		
 	} else if (FieldClass->IsChildOf(FStructProperty::StaticClass())) {
-		OutCategory = UEdGraphSchema_K2::PC_Struct;
 		const int32 StructObjectIndex = PropertyObject->GetIntegerField(TEXT("Struct"));
-		UScriptStruct* Struct = dynamic_cast<UScriptStruct*>(ObjectSerializer->DeserializeObject(StructObjectIndex));
+		auto DeserializedSturct = ObjectSerializer->DeserializeObject(StructObjectIndex);
+		UScriptStruct* Struct = dynamic_cast<UScriptStruct*>(DeserializedSturct);
 		if (!Struct)
 		{
+			UE_LOG(LogAssetGenerator, Warning, TEXT("The Property %s is not a initialized struct. declare the struct in the header file for it to work."), *ObjectName);
 			return;
 		}
+		OutCategory = UEdGraphSchema_K2::PC_Struct;
 		OutSubCategoryObject = Struct;
 		
 		//Match IsTypeCompatibleWithProperty and erase REINST_ structs here:
