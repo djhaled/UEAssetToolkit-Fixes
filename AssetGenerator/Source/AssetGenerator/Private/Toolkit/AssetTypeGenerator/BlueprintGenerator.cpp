@@ -155,6 +155,9 @@ void UBlueprintGenerator::PopulateAssetWithData() {
 	TArray<FDeserializedFunction> Functions;
 	FunctionMap.GenerateValueArray(Functions);
 
+	//Generate blueprint code
+	//FBlueprintGeneratorUtils::GenerateBlueprintGraph(Blueprint);
+
 	//Regenerate blueprint properties
 	const bool bChangedProperties = FBlueprintGeneratorUtils::CreateBlueprintVariablesForProperties(Blueprint, Properties, FunctionMap,
 		[&](const FDeserializedProperty& Property){
@@ -232,7 +235,10 @@ void UBlueprintGenerator::FinalizeAssetCDO() {
 void UBlueprintGenerator::UpdateDeserializerBlueprintClassObject(bool bRecompileBlueprint) {
 	UBlueprint* Blueprint = GetAsset<UBlueprint>();
 	if (bRecompileBlueprint) {
-		FBlueprintCompilationManager::CompileSynchronously(FBPCompileRequest(Blueprint, EBlueprintCompileOptions::None, NULL));
+		if (GetPackageName() != L"/Game/GameElements/Objectives/Facility/DefenseTurret/ESI_FacilityTurret_Sniper") {
+			FBlueprintCompilationManager::CompileSynchronously(FBPCompileRequest(Blueprint, EBlueprintCompileOptions::None, NULL));
+		}
+		
 	}
 
 	UClass* BlueprintGeneratedClass = Blueprint->GeneratedClass;
@@ -317,6 +323,10 @@ void UBlueprintGenerator::PopulateStageDependencies(TArray<FPackageDependency>& 
 
 FName UBlueprintGenerator::GetAssetClass() {
 	return UBlueprint::StaticClass()->GetFName();
+}
+
+bool FBlueprintGeneratorUtils::GenerateBlueprintGraph(UBlueprint* Blueprint) {
+	return false;
 }
 
 //Never generate __DelegateSignature methods, they are automatically handled

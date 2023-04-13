@@ -29,7 +29,7 @@ void USkeletalMeshGenerator::CreateAssetPackage() {
 void USkeletalMeshGenerator::OnExistingPackageLoaded() {
 	USkeletalMesh* ExistingMesh = GetAsset<USkeletalMesh>();
 	
-	if (!IsSkeletalMeshSourceFileUpToDate(ExistingMesh)) {
+	if (!IsSkeletalMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[0]) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing SkeletalMesh %s Source Model"), *GetPackageName().ToString());
 		ReimportSkeletalMeshSource(ExistingMesh);
 	}
@@ -40,28 +40,48 @@ void USkeletalMeshGenerator::OnExistingPackageLoaded() {
 	}
 }
 
-USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) {
-	UFbxFactory* SkeletalMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
+USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) const {
 	UObject* ResultMesh;
-	
-	SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
-	SkeletalMeshFactory->SetDetectImportTypeOnImport(false);
+	if (GetUseFbx()[0]) {
+		UFbxFactory* SkeletalMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
+		
+		SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
+		SkeletalMeshFactory->SetDetectImportTypeOnImport(false);
+		SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, AssetName, Package);
 
-	SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, AssetName, Package);
-
-	FString AssetFbxFilePath;
-	if (!IsGeneratingPublicProject()) {
-		AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));;
-	} else {
-		AssetFbxFilePath = FPublicProjectStubHelper::DefaultSkeletalMesh.GetFullFilePath();
-	}
+		FString AssetFbxFilePath;
+		if (!IsGeneratingPublicProject()) {
+			AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));;
+		} else {
+			AssetFbxFilePath = FPublicProjectStubHelper::DefaultSkeletalMesh.GetFullFilePath();
+		}
 	
-	bool bOperationCancelled = false;
-	ResultMesh = SkeletalMeshFactory->ImportObject(USkeletalMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
+		bool bOperationCancelled = false;
+		ResultMesh = SkeletalMeshFactory->ImportObject(USkeletalMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
         
-	checkf(ResultMesh, TEXT("Failed to import SkeletalMesh %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
-	checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
-	checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
+		checkf(ResultMesh, TEXT("Failed to import SkeletalMesh %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
+		checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
+		checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
+	} else {
+		UPSKFactory* SkeletalMeshFactory = NewObject<UPSKFactory>(GetTransientPackage(), NAME_None);
+
+		SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
+		SetupPskImportSettings(SkeletalMeshFactory);
+
+		FString AssetPskFilePath;
+		if (!IsGeneratingPublicProject()) {
+			AssetPskFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("psk"));
+		} else {
+			AssetPskFilePath = FPublicProjectStubHelper::DefaultSkeletalMesh.GetFullFilePath();
+		}
+
+		bool bOperationCancelled = false;
+		ResultMesh = SkeletalMeshFactory->ImportObject(USkeletalMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetPskFilePath, TEXT(""), bOperationCancelled);
+
+		checkf(ResultMesh, TEXT("Failed to import SkeletalMesh %s from PSK file %s. See log for errors"), *GetPackageName().ToString(), *AssetPskFilePath);
+		checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
+		checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
+	}
 	
 	return CastChecked<USkeletalMesh>(ResultMesh);
 }
@@ -91,7 +111,8 @@ void USkeletalMeshGenerator::ReimportSkeletalMeshSource(USkeletalMesh* Asset) {
 	MarkAssetChanged();
 }
 
-void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) {
+void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) const
+{
 	ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
 	ImportUI->bOverrideFullName = true;
 	ImportUI->bImportMaterials = false;
@@ -122,6 +143,16 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 	if (!IsGeneratingPublicProject()) {
 		//TODO here only until we implement physics asset generation
 		ImportUI->bCreatePhysicsAsset = true;
+	}
+}
+
+void USkeletalMeshGenerator::SetupPskImportSettings(UPSKFactory* ImportFactory) const {
+	if (!IsGeneratingPublicProject()) {
+		const int32 SkeletonObjectIndex = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("Skeleton"));
+		USkeleton* Skeleton = CastChecked<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
+		ImportFactory->SettingsImporter->Skeleton = Skeleton;
+	} else {
+		ImportFactory->SettingsImporter->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
 	}
 }
 

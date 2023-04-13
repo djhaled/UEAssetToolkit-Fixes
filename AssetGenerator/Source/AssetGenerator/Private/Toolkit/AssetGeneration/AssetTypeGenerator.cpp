@@ -50,7 +50,10 @@ UAssetTypeGenerator::UAssetTypeGenerator() {
 	this->bAssetChanged = false;
 	this->bHasAssetEverBeenChanged = false;
 	this->bIsGeneratingPublicProject = false;
-	this->bSkipAnim = true;
+	this->bSkipAnim = false;
+	this->bUseFbx[0] = false; // psk (skeletal mesh)
+	this->bUseFbx[1] = true; // psa (animation)
+	this->bUseFbx[2] = false; // pskx (static mesh)
 }
 
 void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject) {
@@ -70,10 +73,14 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 
 bool UAssetTypeGenerator::IsDumbAsset()
 {
-	if (GetClass()->GetName() == "AnimBlueprintGenerator"
-		|| GetClass()->GetName() == "BlendSpaceGenerator"
-			/*|| GetAssetName().ToString().Contains("AIC_")*/ /*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
-			&& bSkipAnim)
+	// Sometimes when generating, some assets or asset types cause consistent crashes due to missing data
+	// so we may want to filter them out. This is a temporary solution per generation/project.
+	// Here are some examples:
+	/*GetClass()->GetName() == "AnimBlueprintGenerator"*/
+	/*|| GetClass()->GetName() == "BlendSpaceGenerator"*/
+	/*|| GetAssetName().ToString().Contains("AIC_")*/
+	/*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
+	if (bSkipAnim)
 	{
 		UE_LOG(LogAssetGenerator, Warning, TEXT("Skipping asset %s"), *GetAssetName().ToString());
 		return true;
@@ -166,10 +173,10 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 		this->ConstructAssetAndPackage();
 	}
 	if (CurrentStage == EAssetGenerationStage::DATA_POPULATION) {
-		if (!IsDumbAsset()) this->PopulateAssetWithData();
+		/*if (AssetObject != NULL)*/ this->PopulateAssetWithData();
 	}
 	if (CurrentStage == EAssetGenerationStage::CDO_FINALIZATION) {
-		if (!IsDumbAsset()) this->FinalizeAssetCDO();
+		/*if (AssetObject != NULL)*/ this->FinalizeAssetCDO();
 	}
 	if (CurrentStage == EAssetGenerationStage::PRE_FINSHED) {
 		if (AssetObject != NULL) this->PreFinishAssetGeneration();

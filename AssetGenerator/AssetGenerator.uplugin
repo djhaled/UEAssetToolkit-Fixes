@@ -25,6 +25,10 @@
 		{
 			"Name": "AssetDumper",
 			"Enabled": true
+		},
+		{
+			"Name": "UnrealPSKPSA",
+			"Enabled": true
 		}
 	]
 }

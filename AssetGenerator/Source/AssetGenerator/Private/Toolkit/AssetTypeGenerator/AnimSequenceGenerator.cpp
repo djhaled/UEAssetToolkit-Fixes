@@ -92,6 +92,10 @@ void UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 	ImportUI->AnimSequenceImportData->CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength);
 }
 
+void UAnimSequenceGenerator::SetupPsaImportSettings(UPSAFactory* ImportUI) const {
+	
+}
+
 void UAnimSequenceGenerator::PopulateAnimationProperties(UAnimSequence* Asset) {
 	const TSharedPtr<FJsonObject> AssetData = GetAssetData();
 	const TSharedPtr<FJsonObject> AssetObjectProperties = AssetData->GetObjectField(TEXT("AssetObjectData"));

@@ -3,6 +3,9 @@
 #include "WorkspaceMenuStructure.h"
 #include "Toolkit/AssetGeneration/AssetGeneratorWidget.h"
 #include "WorkspaceMenuStructureModule.h"
+#include "LevelEditor.h"
+#include "LevelEditorActions.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 
 #define LOCTEXT_NAMESPACE "AssetGenerator"
 

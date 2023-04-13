@@ -24,6 +24,8 @@ public:
 
 class ASSETGENERATOR_API FBlueprintGeneratorUtils {
 public:
+	static bool GenerateBlueprintGraph(UBlueprint* Blueprint);
+	
 	/** Determines whenever function with provided name is generated and should not be auto implemented */
 	static bool IsFunctionNameGenerated(const FString& FunctionName);
 
