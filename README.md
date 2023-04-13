@@ -35,12 +35,12 @@ Example command line:
 
 Assets that you MUST generate in-editor:
 - SoundCue
-- Assets using FBX file e.g. SM, SKM, AnimSequence
+- Assets using FBX/ActorX file e.g. Static Mesh, Skeletal Mesh, AnimSequence
 
 ## Tips
-- If any specific asset type/package/directory is giving you a massive headache and you want to skip it (`BlacklistPackageNames` doesn't work half of the time), edit line `73` in `AssetTypeGenerator.cpp`.
+- Sometimes when generating, some assets or asset types cause consistent crashes due to missing data so we may want to filter them out. If any specific asset type/package/directory is giving you a massive headache and you want to skip it, edit `IsDumbAsset()` in `AssetTypeGenerator.cpp` line `74`. This is a temporary solution per generation/project.
 - When you are generating in-editor, you almost certainly almost want to be running in debug mode so that your IDE will show a full stack breakpoint on the line that the exception occurs, so you can see the values of each set of properties in each stack. It is ideal to even download the engine editor symbols, which are actually 10x smaller than the size of EGS store says (silly bug). So for 4.27 this was 3.5GBs.
 - The main "logic" occurs in `UAssetTypeGenerator::AdvanceGenerationState()`, so you will probably be stepping through this in debug mode to see exactly what is going on, if you are crashing for an unexplainable reason.
 - If you are getting crashes with blueprint interfaces, it is almost certainly during the `UBlueprintGenerator::PostConstructOrUpdateAsset` stage, so temporarily comment out the lines `97`-`100` for that asset(s).
 - Be careful about the `RowStruct` property in the serialized JSON for `DataTable` assets. This can quite easily be trying to reference one that doesn't exist (as it is nativized or something), and will cause really annoying crashes as they can take ages to diagnose.
-- For natitivzed assets, CAS should serialize BPs/enums if they fall in the right settings, but **NOT** structs. So you will have to dummy these manually prior. 
+- For natitivzed assets, CAS should serialize BPs/enums if they fall in the right settings, but **NOT** structs. So you will have to dummy these manually prior.

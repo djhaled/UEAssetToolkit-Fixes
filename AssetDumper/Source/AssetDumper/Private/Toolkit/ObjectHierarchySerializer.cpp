@@ -1,5 +1,7 @@
 #include "Toolkit/ObjectHierarchySerializer.h"
 #include "Toolkit/PropertySerializer.h"
+#include "Tracks/MovieSceneFloatTrack.h"
+#include "Sections/MovieSceneFloatSection.h"
 #include "UObject/Package.h"
 
 DECLARE_LOG_CATEGORY_CLASS(LogObjectHierarchySerializer, All, All);
@@ -179,7 +181,7 @@ UObject* UObjectHierarchySerializer::DeserializeObject(int32 Index) {
         return ConstructedObject;
     }
     
-    UE_LOG(LogObjectHierarchySerializer, Fatal, TEXT("Unhandled object type: %s for package %s"), *ObjectType, *SourcePackage->GetPathName());
+    UE_LOG(LogObjectHierarchySerializer, Warning, TEXT("Unhandled object type: %s for package %s"), *ObjectType, *SourcePackage->GetPathName());
     return nullptr;
 }
 
@@ -368,6 +370,54 @@ void UObjectHierarchySerializer::DeserializeObjectProperties(const TSharedPtr<FJ
     UClass* ObjectClass = Object->GetClass();
     for (FProperty* Property = ObjectClass->PropertyLink; Property; Property = Property->PropertyLinkNext) {
         const FString PropertyName = Property->GetName();
+    	UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+
+    	if (PropertyName == "PropertyName") {
+			if (auto SceneProp = Cast<UMovieScenePropertyTrack>(Object)) {
+				//FloatTrack->SetPropertyNameAndPath()
+				auto PropertyBind = Properties.Get()->Values.Find("PropertyBinding");
+				auto PropertyBindObject = PropertyBind->Get()->AsObject();
+				auto PropName = PropertyBindObject.Get()->Values.Find("PropertyName")->Get()->AsString();
+				FName ConvertedFString = FName(*PropName);
+				SceneProp->SetPropertyNameAndPath(ConvertedFString, PropName);
+			}
+		}
+		if (PropertyName == "SectionRange") {
+			if (auto FloatSection = Cast<UMovieSceneSection>(Object)) {
+				//FloatSection->SetRange();
+				auto SectionRange = Properties.Get()->Values.Find("SectionRange");
+				if (!SectionRange) { continue; }
+				auto SectionRangeObject = SectionRange->Get()->AsObject();
+				auto UpperB = SectionRangeObject.Get()->Values.Find("UpperBound")->Get()->AsObject();
+				auto UpperBType = UpperB.Get()->Values.Find("Type")->Get()->AsString();
+				auto UpperBValue = UpperB.Get()->Values.Find("Value")->Get()->AsNumber();
+
+				// type value
+				auto LowerB = SectionRangeObject.Get()->Values.Find("LowerBound")->Get()->AsObject();
+				auto LowerBType = LowerB.Get()->Values.Find("Type")->Get()->AsString();
+				auto LowerBValue = LowerB.Get()->Values.Find("Value")->Get()->AsNumber();
+				UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+				TRange<FFrameNumber> NewRangeV2;
+				NewRangeV2 = FloatSection->GetRange();
+				FFrameNumber TT;
+				TT.Value = UpperBValue;
+				NewRangeV2.SetUpperBoundValue(TT);
+				FFrameNumber LL;
+				LL.Value = LowerBValue;
+				if (LowerBType == "Inclusive") {
+					NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(LL));
+				} else {
+					NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Exclusive(LL));
+				}
+				
+				if (UpperBType == "Inclusive") {
+					NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(TT));
+				} else {
+					NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Exclusive(TT));
+				}
+				FloatSection->SetRange(NewRangeV2);
+			}
+		}
     	
         if (PropertySerializer->ShouldSerializeProperty(Property) && Properties->HasField(PropertyName)) {
             void* PropertyValue = Property->ContainerPtrToValuePtr<void>(Object);
