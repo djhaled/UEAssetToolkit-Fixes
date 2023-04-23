@@ -4,6 +4,11 @@ A set of 2 plugins, one for generating asset dumps from the game and second for 
 ## To Install
 These are plugins, are both are required to install. All you need to do, is place these two folders into the project's plugins folders. If they don't show up in your project correctly, delete all of the intermediate/saved and .sln file and regenerate visual studio solution files from the .uproject. 
 
+## Issues/help
+For issues compiling the project with [UnrealPSKPSA](https://github.com/djhaled/UnrealPSKPSA): the current version of UnrealPSKPSA is only backported to 4.27. If you are on an earlier version (i.e. 4.25 or 4.26), and know what you are doing, please do try to backport to those versions and make a pull request. Otherwise, you can go back to a commit before the UnrealPSKPSA plugin was added [here](https://github.com/Buckminsterfullerene02/UEAssetToolkit-Fixes/tree/5a28147233303e596ecdf02ab64a50d7e56b460e).
+
+You can ask for help in the [UE Modding Discord](https://discord.gg/zVvsE9mEEa) in the #questions forum channel. Please make sure to add [UEAT] into the post title.
+
 ## Creating Asset Dumps
 Use CAS to create the JSON dumps.
 
