@@ -6,27 +6,18 @@ public class UnrealPSKPSA : ModuleRules
 {
 	public UnrealPSKPSA(ReadOnlyTargetRules Target) : base(Target)
 	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+#if UE_4_24_OR_LATER
 		bLegacyPublicIncludePaths = false;
-        ShadowVariableWarningLevel = WarningLevel.Off;
+		ShadowVariableWarningLevel = WarningLevel.Off;
+#endif    
         PublicDefinitions.Add("WIN32_LEAN_AND_MEAN");
-		
-		PublicIncludePaths.AddRange(new string[] {
-			// ... add public include paths required here ...
-		});
-				
-		
-		PrivateIncludePaths.AddRange(new string[] {
-			// ... add other private include paths required here ...
-		});
-			
-		
-		PublicDependencyModuleNames.AddRange(new string[] {
+
+        PublicDependencyModuleNames.AddRange(new[] {
 			"Core",
-			// ... add other public dependencies that you statically link with here ...
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] {
+		PrivateDependencyModuleNames.AddRange(new[] {
 			"CoreUObject",
 			"Engine",
 			"Slate",
@@ -41,10 +32,6 @@ public class UnrealPSKPSA : ModuleRules
 			"MeshUtilitiesCommon", 
 			"EditorScriptingUtilities", 
 			"GeometricObjects",
-		});
-		
-		DynamicallyLoadedModuleNames.AddRange(new string[] {
-			// ... add any modules that your module loads dynamically here ...
 		});
 	}
 }

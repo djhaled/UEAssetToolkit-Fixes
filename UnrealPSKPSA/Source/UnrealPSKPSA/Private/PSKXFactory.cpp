@@ -1,21 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PSKXFactory.h"
-
-#include <ObjectArray.h>
-
-#include "ActorXUtils.h"
 #include "PSKReader.h"
 #include "RawMesh.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Materials/MaterialInstanceConstant.h"
-#include "Editor/UnrealEd/Classes/Factories/MaterialInstanceConstantFactoryNew.h"
-#include "EditorAssetLibrary.h"
-#include "AssetToolsModule.h"
-#include "IAssetTools.h"
-#include "Misc/FileHelper.h"
-#include "Materials/MaterialInstanceConstant.h"
 
 UObject* UPSKXFactory::Import(const FString Filename, UObject* Parent, const FName Name, const EObjectFlags Flags) const
 {
