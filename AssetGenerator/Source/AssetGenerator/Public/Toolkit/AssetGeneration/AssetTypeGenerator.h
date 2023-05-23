@@ -45,7 +45,7 @@ private:
 	bool bIsGeneratingPublicProject;
 	bool bIsStageNotOverriden;
 	bool bSkipAnim;
-	TArray<bool> bUseFbx = {false, true, false}; // 0 = psk, 1 = psa, 2 = pskx
+	TArray<bool> bUseFbx; // 0 = pskx, 1 = psk, 2 = psa
 	
 	UPROPERTY()
     UObjectHierarchySerializer* ObjectSerializer;
@@ -57,7 +57,7 @@ private:
 	UObject* AssetObject;
 
 	/** Initializes this asset generator instance with the file data */
-	void InitializeInternal(const FString& DumpRootDirectory, const FString& PackageBaseDirectory, FName PackageName, TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject);
+	void InitializeInternal(const FString& DumpRootDirectory, const FString& PackageBaseDirectory, FName PackageName, TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx);
 
 	/** Dispatches asset construction and tries to locate existing packages */
 	void ConstructAssetAndPackage();
@@ -152,7 +152,7 @@ public:
 	static FString GetAssetFilePath(const FString& RootDirectory, FName PackageName);
 
 	/** Tries to load asset generator state from the asset dump located under the provided root directory and having given package name */
-	static UAssetTypeGenerator* InitializeFromFile(const FString& RootDirectory, FName PackageName, bool bGeneratePublicProject);
+	static UAssetTypeGenerator* InitializeFromFile(const FString& RootDirectory, FName PackageName, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx);
 
 	static TArray<TSubclassOf<UAssetTypeGenerator>> GetAllGenerators();
 

@@ -28,6 +28,10 @@ public:
 	bool bGeneratePublicProject;
 	/** If true, ticking will be performed manually by the external code like commandlet, and tickable game object logic will be fully ignored */
 	bool bTickOnTheSide;
+	/** If true, asset generator will import FBX files instead of ActorX ones */
+	bool bUseSmFbx;
+	bool bUseSkmFbx;
+	bool bUseAnimFbx;
 
 	FAssetGeneratorConfiguration();
 };

@@ -50,7 +50,7 @@ public:
 
 UAssetGeneratorCommandlet::UAssetGeneratorCommandlet() {
 	HelpDescription = TEXT("Generates assets from the dump located in the provided folder using the provided settings");
-	HelpUsage = TEXT("assetgenerator -DumpDirectory=Path/To/Directory [-ForceGeneratePackageNames=ForceGeneratePackageNames.txt] [-BlacklistPackageNames=BlacklistPackageNames.txt] [-AssetClassWhitelist=Class1,Class2] [-NoRefresh] [-PublicProject]");
+	HelpUsage = TEXT("assetgenerator -DumpDirectory=Path/To/Directory [-ForceGeneratePackageNames=ForceGeneratePackageNames.txt] [-BlacklistPackageNames=BlacklistPackageNames.txt] [-AssetClassWhitelist=Class1,Class2] [-NoRefresh] [-PublicProject] [-UsePskx] [-UsePsk] [-UsePsa]");
 	ShowErrorCount = false;
 }
 
@@ -69,6 +69,9 @@ int32 UAssetGeneratorCommandlet::Main(const FString& Params) {
 
 	const bool bRefreshExistingAssets = !Switches.Contains(TEXT("NoRefresh"));
 	const bool bGeneratePublicProject = Switches.Contains(TEXT("PublicProject"));
+	const bool bUseSmFbx = !Switches.Contains(TEXT("UsePskx"));
+	const bool bUseSkmFbx = !Switches.Contains(TEXT("UsePsk"));
+	const bool bUseAnimFbx = !Switches.Contains(TEXT("UsePsa"));
 	
 	FString DumpDirectory;
 	{
@@ -180,6 +183,9 @@ int32 UAssetGeneratorCommandlet::Main(const FString& Params) {
 	Configuration.DumpRootDirectory = DumpDirectory;
 	Configuration.bRefreshExistingAssets = bRefreshExistingAssets;
 	Configuration.bGeneratePublicProject = bGeneratePublicProject;
+	Configuration.bUseSmFbx = bUseSmFbx;
+	Configuration.bUseSkmFbx = bUseSkmFbx;
+	Configuration.bUseAnimFbx = bUseAnimFbx;
 
 	//Populate the initial list of the packages with asset category filters applied
 	TArray<FName> ResultPackagesToGenerate;

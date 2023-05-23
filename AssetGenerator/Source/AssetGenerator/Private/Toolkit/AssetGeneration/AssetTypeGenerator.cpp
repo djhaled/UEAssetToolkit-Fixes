@@ -51,12 +51,9 @@ UAssetTypeGenerator::UAssetTypeGenerator() {
 	this->bHasAssetEverBeenChanged = false;
 	this->bIsGeneratingPublicProject = false;
 	this->bSkipAnim = false;
-	this->bUseFbx[0] = false; // psk (skeletal mesh)
-	this->bUseFbx[1] = true; // psa (animation)
-	this->bUseFbx[2] = false; // pskx (static mesh)
 }
 
-void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject) {
+void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx) {
 	this->DumpRootDirectory = DumpRootDirectory;
 	this->PackageBaseDirectory = InPackageBaseDirectory;
 	this->PackageName = FName(*RootFileObject->GetStringField(TEXT("AssetPackage")));
@@ -68,6 +65,9 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 	this->ObjectSerializer->InitializeForDeserialization(ObjectHierarchy);
 	this->AssetData = RootFileObject->GetObjectField(TEXT("AssetSerializedData"));
 	this->bIsGeneratingPublicProject = bGeneratePublicProject;
+	this->bUseFbx[0] = bUseSmFbx;
+	this->bUseFbx[1] = bUseSkmFbx;
+	this->bUseFbx[2] = bUseAnimFbx;
 	PostInitializeAssetGenerator();
 }
 
@@ -211,7 +211,7 @@ FString UAssetTypeGenerator::GetAssetFilePath(const FString& RootDirectory, FNam
 	return FPaths::Combine(PackageBaseDirectory, AssetDumpFilename);
 }
 
-UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& RootDirectory, const FName PackageName, bool bGeneratePublicProject) {
+UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& RootDirectory, const FName PackageName, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx) {
 	const FString AssetDumpFilePath = GetAssetFilePath(RootDirectory, PackageName);
 	const FString PackageBaseDirectory = FPaths::GetPath(AssetDumpFilePath);
 
@@ -241,7 +241,7 @@ UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& Root
 	}
 
 	UAssetTypeGenerator* NewGenerator = NewObject<UAssetTypeGenerator>(GetTransientPackage(), AssetTypeGenerator);
-	NewGenerator->InitializeInternal(RootDirectory, PackageBaseDirectory, PackageName, RootFileObject, bGeneratePublicProject);
+	NewGenerator->InitializeInternal(RootDirectory, PackageBaseDirectory, PackageName, RootFileObject, bGeneratePublicProject, bUseSmFbx, bUseSkmFbx, bUseAnimFbx);
 	return NewGenerator;
 }
 

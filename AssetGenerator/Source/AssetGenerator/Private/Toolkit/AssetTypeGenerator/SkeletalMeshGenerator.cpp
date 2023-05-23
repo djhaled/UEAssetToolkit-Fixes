@@ -1,14 +1,11 @@
 #include "Toolkit/AssetTypeGenerator/SkeletalMeshGenerator.h"
 #include "AutomatedAssetImportData.h"
-#include "MeshDescription.h"
-#include "AssetToolsModule.h"
 #include "Dom/JsonObject.h"
 #include "Toolkit/ObjectHierarchySerializer.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Engine/SkeletalMesh.h"
 #include "Factories/FbxImportUI.h"
 #include "Factories/FbxSkeletalMeshImportData.h"
-#include "Factories/SkeletonFactory.h"
 #include "Factories/ReimportFbxSkeletalMeshFactory.h"
 #include "Modules/ModuleManager.h"
 #include "PhysicsEngine/BodySetup.h"
@@ -29,7 +26,7 @@ void USkeletalMeshGenerator::CreateAssetPackage() {
 void USkeletalMeshGenerator::OnExistingPackageLoaded() {
 	USkeletalMesh* ExistingMesh = GetAsset<USkeletalMesh>();
 	
-	if (!IsSkeletalMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[0]) {
+	if (!IsSkeletalMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[1]) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing SkeletalMesh %s Source Model"), *GetPackageName().ToString());
 		ReimportSkeletalMeshSource(ExistingMesh);
 	}
@@ -42,7 +39,7 @@ void USkeletalMeshGenerator::OnExistingPackageLoaded() {
 
 USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) const {
 	UObject* ResultMesh;
-	if (GetUseFbx()[0]) {
+	if (GetUseFbx()[1]) {
 		UFbxFactory* SkeletalMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
 		
 		SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));

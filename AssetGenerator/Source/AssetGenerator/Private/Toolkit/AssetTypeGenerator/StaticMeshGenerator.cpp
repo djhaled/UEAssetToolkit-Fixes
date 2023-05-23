@@ -26,7 +26,7 @@ void UStaticMeshGenerator::CreateAssetPackage() {
 void UStaticMeshGenerator::OnExistingPackageLoaded() {
 	UStaticMesh* ExistingMesh = GetAsset<UStaticMesh>();
 	
-	if (!IsStaticMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[2]) {
+	if (!IsStaticMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[0]) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing StaticMesh %s Source Model"), *GetPackageName().ToString());
 		ReimportStaticMeshSource(ExistingMesh);
 	}
@@ -38,7 +38,7 @@ void UStaticMeshGenerator::OnExistingPackageLoaded() {
 
 UStaticMesh* UStaticMeshGenerator::ImportStaticMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) {
 	UObject* ResultMesh;
-	if (GetUseFbx()[2]) {
+	if (GetUseFbx()[0]) {
 		UFbxFactory* StaticMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
 	
 		StaticMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(StaticMeshFactory));

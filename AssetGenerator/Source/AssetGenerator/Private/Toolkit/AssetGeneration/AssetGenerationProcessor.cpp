@@ -128,6 +128,9 @@ FAssetGeneratorConfiguration::FAssetGeneratorConfiguration() :
 		DumpRootDirectory(FPaths::ProjectDir() + TEXT("AssetDump/")),
 		MaxAssetsToAdvancePerTick(4),
 		bRefreshExistingAssets(true),
+		bUseSmFbx(true),
+		bUseSkmFbx(true),
+		bUseAnimFbx(true),
 		bGeneratePublicProject(false),
 		bTickOnTheSide(false) {
 }
@@ -210,7 +213,7 @@ EAddPackageResult FAssetGenerationProcessor::AddPackage(const FName PackageName)
 	}
 	
 	//First, try to extract package from the dump
-	UAssetTypeGenerator* AssetTypeGenerator = UAssetTypeGenerator::InitializeFromFile(Configuration.DumpRootDirectory, PackageName, Configuration.bGeneratePublicProject);
+	UAssetTypeGenerator* AssetTypeGenerator = UAssetTypeGenerator::InitializeFromFile(Configuration.DumpRootDirectory, PackageName, Configuration.bGeneratePublicProject, Configuration.bUseSmFbx, Configuration.bUseSkmFbx, Configuration.bUseAnimFbx);
 	if (AssetTypeGenerator != NULL) {
 		FString OutSkipReason;
 		//Skip the package if it's not whitelisted by the configuration
