@@ -65,9 +65,9 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 	this->ObjectSerializer->InitializeForDeserialization(ObjectHierarchy);
 	this->AssetData = RootFileObject->GetObjectField(TEXT("AssetSerializedData"));
 	this->bIsGeneratingPublicProject = bGeneratePublicProject;
-	this->bUseFbx[0] = bUseSmFbx;
-	this->bUseFbx[1] = bUseSkmFbx;
-	this->bUseFbx[2] = bUseAnimFbx;
+	this->bUseFbx.Add(bUseSmFbx);
+	this->bUseFbx.Add(bUseSkmFbx);
+	this->bUseFbx.Add(bUseAnimFbx);
 	PostInitializeAssetGenerator();
 }
 
