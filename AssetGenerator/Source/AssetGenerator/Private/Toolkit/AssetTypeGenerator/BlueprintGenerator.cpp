@@ -214,7 +214,7 @@ void UBlueprintGenerator::FinalizeAssetCDO() {
 	const bool bScriptObjectChanged = !GetObjectSerializer()->CompareUObjects(
 		SimpleConstructionScriptIndex, OldSimpleConstructionScript, false, false);
 	
-	if (bScriptObjectChanged) {
+	if (bScriptObjectChanged && SimpleConstructionScriptIndex != INDEX_NONE) {
 		//Trash out old SimpleConstructionScript so we can straight up replace it with the new one
 		if (Blueprint->SimpleConstructionScript != NULL) {
 			MoveToTransientPackageAndRename(Blueprint->SimpleConstructionScript);

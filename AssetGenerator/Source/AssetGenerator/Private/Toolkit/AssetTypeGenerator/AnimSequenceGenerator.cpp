@@ -81,15 +81,17 @@ void UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 	ImportUI->AnimSequenceImportData = NewObject<UFbxAnimSequenceImportData>(ImportUI, NAME_None, RF_NoFlags);
 	ImportUI->AnimSequenceImportData->bRemoveRedundantKeys = true;
 	
-	const int32 NumFrames = GetAssetData()->GetIntegerField(TEXT("NumFrames"));
+	const int32 NumFrames = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("NumFrames"));
 	ImportUI->AnimSequenceImportData->AnimationLength = EFBXAnimationLengthImportType::FBXALIT_SetRange;
 	ImportUI->AnimSequenceImportData->FrameImportRange = FInt32Interval(0, NumFrames - 1);
 	
-	const int32 SequenceLength = GetAssetData()->GetIntegerField(TEXT("SequenceLength"));
-	int32 RateScale = GetAssetData()->GetIntegerField(TEXT("RateScale"));
+	const double SequenceLength = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetNumberField(TEXT("SequenceLength"));
+	double RateScale = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetNumberField(TEXT("RateScale"));
 	if (RateScale == 0) RateScale = 1;
-	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = true;
-	ImportUI->AnimSequenceImportData->CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength);
+	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = false;
+	const int32 CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength) * RateScale;
+	UE_LOG(LogAssetGenerator, Log, TEXT("CustomSampleRate: %d"), CustomSampleRate);
+	ImportUI->AnimSequenceImportData->CustomSampleRate = CustomSampleRate;
 }
 
 void UAnimSequenceGenerator::SetupPsaImportSettings(UPSAFactory* ImportUI) const {
@@ -101,6 +103,17 @@ void UAnimSequenceGenerator::PopulateAnimationProperties(UAnimSequence* Asset) {
 	const TSharedPtr<FJsonObject> AssetObjectProperties = AssetData->GetObjectField(TEXT("AssetObjectData"));
 
 	GetObjectSerializer()->DeserializeObjectProperties(AssetObjectProperties.ToSharedRef(), Asset);
+
+	int MaxAnimNotifyTrack = 0;
+
+	for (const FAnimNotifyEvent& Notify : Asset->Notifies) {
+		MaxAnimNotifyTrack = FMath::Max(MaxAnimNotifyTrack, Notify.TrackIndex);
+	}
+
+	if (MaxAnimNotifyTrack > Asset->AnimNotifyTracks.Num() - 1) {
+		Asset->AnimNotifyTracks.SetNum(MaxAnimNotifyTrack + 1);
+	}
+	
 	MarkAssetChanged();
 }
 
@@ -108,7 +121,21 @@ bool UAnimSequenceGenerator::IsAnimationPropertiesUpToDate(UAnimSequence* Asset)
 	const TSharedPtr<FJsonObject> AssetData = GetAssetData();
 	const TSharedPtr<FJsonObject> AssetObjectProperties = AssetData->GetObjectField(TEXT("AssetObjectData"));
 
-	return GetObjectSerializer()->AreObjectPropertiesUpToDate(AssetObjectProperties.ToSharedRef(), Asset);
+	if(!GetObjectSerializer()->AreObjectPropertiesUpToDate(AssetObjectProperties.ToSharedRef(), Asset)) {
+		return false;
+	}
+
+	int MaxAnimNotifyTrack = 0;
+
+	for (const FAnimNotifyEvent& Notify : Asset->Notifies) {
+		MaxAnimNotifyTrack = FMath::Max(MaxAnimNotifyTrack, Notify.TrackIndex);
+	}
+
+	if (MaxAnimNotifyTrack > Asset->AnimNotifyTracks.Num() - 1) {
+		return false;
+	}
+
+	return true;
 }
 
 bool UAnimSequenceGenerator::IsAnimationSourceUpToDate(UAnimSequence* Asset) const {

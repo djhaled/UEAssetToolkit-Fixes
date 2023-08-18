@@ -37,6 +37,7 @@ private:
 	FString PackageBaseDirectory;
     FName PackageName;
 	FName AssetName;
+	FString AssetClass;
     TSharedPtr<FJsonObject> AssetData;
 	EAssetGenerationStage CurrentStage;
 	bool bUsingExistingPackage;

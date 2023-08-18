@@ -115,6 +115,7 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 	ImportUI->bImportMaterials = false;
 	ImportUI->bImportTextures = false;
 	ImportUI->bImportAsSkeletal = true;
+	ImportUI->bImportAnimations = false;
 
 	if (!IsGeneratingPublicProject()) {
 		const int32 SkeletonObjectIndex = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("Skeleton"));
@@ -125,8 +126,10 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 			UObject* NewSkeleton = AssetToolsModule.Get().CreateAsset(SkeletonName, PackagePath, USkeleton::StaticClass(), NewObject<USkeletonFactory>());
 			ImportUI->Skeleton = CastChecked<USkeleton>(NewSkeleton);
 		} else {*/
-			USkeleton* Skeleton = CastChecked<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
-			ImportUI->Skeleton = Skeleton;
+			USkeleton* Skeleton = Cast<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
+			if (Skeleton) {
+				ImportUI->Skeleton = Skeleton;
+			}
 		//}
 	} else {
 		ImportUI->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
@@ -136,6 +139,7 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 	ImportUI->SkeletalMeshImportData->ImportContentType = FBXICT_All;
 	ImportUI->SkeletalMeshImportData->VertexColorImportOption = EVertexColorImportOption::Replace;
 	ImportUI->SkeletalMeshImportData->bUpdateSkeletonReferencePose = false;
+	//ImportUI->SkeletalMeshImportData->ImportUniformScale = 0.01f;
 
 	if (!IsGeneratingPublicProject()) {
 		//TODO here only until we implement physics asset generation

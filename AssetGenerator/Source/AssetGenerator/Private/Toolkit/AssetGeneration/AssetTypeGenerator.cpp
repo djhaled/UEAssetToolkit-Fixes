@@ -64,6 +64,7 @@ void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, c
 	const TArray<TSharedPtr<FJsonValue>> ObjectHierarchy = RootFileObject->GetArrayField(TEXT("ObjectHierarchy"));
 	this->ObjectSerializer->InitializeForDeserialization(ObjectHierarchy);
 	this->AssetData = RootFileObject->GetObjectField(TEXT("AssetSerializedData"));
+	this->AssetClass = AssetData->GetStringField(TEXT("AssetClass"));
 	this->bIsGeneratingPublicProject = bGeneratePublicProject;
 	this->bUseFbx.Add(bUseSmFbx);
 	this->bUseFbx.Add(bUseSkmFbx);
@@ -125,6 +126,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 
 void UAssetTypeGenerator::MarkAssetChanged() {
 	this->bAssetChanged = true;
+	this->bHasAssetEverBeenChanged = true;
 	if (this->AssetPackage) {
 		this->AssetPackage->MarkPackageDirty();
 	}
@@ -187,6 +189,10 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 	
 	//Force package to be saved to disk if it has been marked as changed, which should have also marked it as dirty
 	if (bAssetChanged) {
+		if (AssetClass == "/Script/Engine.AnimSequence") {
+			AssetPackage->FullyLoad();
+		}
+		
 		TArray<UPackage*> PackagesToSave;
 		PackagesToSave.Add(AssetPackage);
 		GetAdditionalPackagesToSave(PackagesToSave);

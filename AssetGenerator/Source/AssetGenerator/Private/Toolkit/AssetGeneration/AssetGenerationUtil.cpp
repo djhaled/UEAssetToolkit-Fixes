@@ -238,6 +238,11 @@ void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName
 		const int32 MetaClassIndex = PropertyObject->GetIntegerField(TEXT("MetaClass"));
 		OutSubCategoryObject = ObjectSerializer->DeserializeObject(MetaClassIndex);
 		
+	} else if (FieldClass->IsChildOf(FSoftObjectProperty::StaticClass())) {
+		OutCategory = UEdGraphSchema_K2::PC_SoftObject;
+		const int32 PropertyClassIndex = PropertyObject->GetIntegerField(TEXT("PropertyClass"));
+		OutSubCategoryObject = ObjectSerializer->DeserializeObject(PropertyClassIndex);
+		
 	} else if (FieldClass->IsChildOf(FObjectPropertyBase::StaticClass())) {
 		OutCategory = UEdGraphSchema_K2::PC_Object;
 		const int32 ObjectClassIndex = PropertyObject->GetIntegerField(TEXT("PropertyClass"));
