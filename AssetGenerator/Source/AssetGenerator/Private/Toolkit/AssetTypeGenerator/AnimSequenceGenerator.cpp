@@ -15,7 +15,7 @@ void UAnimSequenceGenerator::CreateAssetPackage() {
 *GetPackageName().ToString());
 	UAnimSequence* NewAnimSequence = ImportAnimation(NewPackage, GetAssetName(), RF_Public | RF_Standalone);
 	SetPackageAndAsset(NewPackage, NewAnimSequence);
-	PopulateAnimationProperties(NewAnimSequence);
+	//PopulateAnimationProperties(NewAnimSequence);
 }
 
 void UAnimSequenceGenerator::OnExistingPackageLoaded() {
@@ -28,7 +28,7 @@ void UAnimSequenceGenerator::OnExistingPackageLoaded() {
 	
 	if (!IsAnimationPropertiesUpToDate(ExistingAnimation)) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing AnimationSequence %s Properties"), *GetPackageName().ToString());
-		PopulateAnimationProperties(ExistingAnimation);
+		//PopulateAnimationProperties(ExistingAnimation);
 	}
 }
 
