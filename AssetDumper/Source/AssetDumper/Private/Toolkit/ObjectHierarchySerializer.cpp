@@ -370,55 +370,60 @@ void UObjectHierarchySerializer::DeserializeObjectProperties(const TSharedPtr<FJ
     UClass* ObjectClass = Object->GetClass();
     for (FProperty* Property = ObjectClass->PropertyLink; Property; Property = Property->PropertyLinkNext) {
         const FString PropertyName = Property->GetName();
-    	//UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
 
     	if (PropertyName == "PropertyName") {
 			if (auto SceneProp = Cast<UMovieScenePropertyTrack>(Object)) {
-				//FloatTrack->SetPropertyNameAndPath()
-				auto PropertyBind = Properties.Get()->Values.Find("PropertyBinding");
-				auto PropertyBindObject = PropertyBind->Get()->AsObject();
-				auto PropName = PropertyBindObject.Get()->Values.Find("PropertyName")->Get()->AsString();
-				FName ConvertedFString = FName(*PropName);
-				SceneProp->SetPropertyNameAndPath(ConvertedFString, PropName);
+#if ENGINE_MINOR_VERSION < 26
+				FString PropName = Properties.Get()->Values.Find("PropertyName")->Get()->AsString();
+				SceneProp->SetPropertyNameAndPath(FName(*PropName), PropName);
+#else
+				const TSharedPtr<FJsonValue>* PropertyBind = Properties.Get()->Values.Find("PropertyBinding");
+				if (PropertyBind) {
+					TSharedPtr<FJsonObject> PropertyBindObject = PropertyBind->Get()->AsObject();
+					FString PropName = PropertyBindObject.Get()->Values.Find("PropertyName")->Get()->AsString();
+					SceneProp->SetPropertyNameAndPath(FName(*PropName), PropName);
+				}
+#endif
 			}
 		}
+    	
 		if (PropertyName == "SectionRange") {
 			if (auto FloatSection = Cast<UMovieSceneSection>(Object)) {
-				//FloatSection->SetRange();
-				auto SectionRange = Properties.Get()->Values.Find("SectionRange");
-				if (!SectionRange) { continue; }
-				auto SectionRangeObject = SectionRange->Get()->AsObject();
-				auto UpperB = SectionRangeObject.Get()->Values.Find("UpperBound")->Get()->AsObject();
-				auto UpperBType = UpperB.Get()->Values.Find("Type")->Get()->AsString();
-				auto UpperBValue = UpperB.Get()->Values.Find("Value")->Get()->AsNumber();
+				const TSharedPtr<FJsonValue>* SectionRange = Properties.Get()->Values.Find("SectionRange");
+				if (SectionRange) {
+					TSharedPtr<FJsonObject> SectionRangeObject = SectionRange->Get()->AsObject();
+					TSharedPtr<FJsonObject> UpperB = SectionRangeObject.Get()->Values.Find("UpperBound")->Get()->AsObject();
+					FString UpperBType = UpperB.Get()->Values.Find("Type")->Get()->AsString();
+					double UpperBValue = UpperB.Get()->Values.Find("Value")->Get()->AsNumber();
 
-				// type value
-				auto LowerB = SectionRangeObject.Get()->Values.Find("LowerBound")->Get()->AsObject();
-				auto LowerBType = LowerB.Get()->Values.Find("Type")->Get()->AsString();
-				auto LowerBValue = LowerB.Get()->Values.Find("Value")->Get()->AsNumber();
-				//UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+					// type value
+					TSharedPtr<FJsonObject> LowerB = SectionRangeObject.Get()->Values.Find("LowerBound")->Get()->AsObject();
+					FString LowerBType = LowerB.Get()->Values.Find("Type")->Get()->AsString();
+					double LowerBValue = LowerB.Get()->Values.Find("Value")->Get()->AsNumber();
 
-				TRange<FFrameNumber> NewRangeV2;
-				NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
-				NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
-				//NewRangeV2 = FloatSection->GetRange();
-				FFrameNumber TT;
-				TT.Value = UpperBValue;
-				NewRangeV2.SetUpperBoundValue(TT);
-				FFrameNumber LL;
-				LL.Value = LowerBValue;
-				if (LowerBType == "Inclusive") {
-					NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(LL));
-				} else {
-					NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Exclusive(LL));
-				}
+					TRange<FFrameNumber> NewRangeV2;
+					NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
+					NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
 				
-				if (UpperBType == "Inclusive") {
-					NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(TT));
-				} else {
-					NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Exclusive(TT));
+					FFrameNumber TT;
+					TT.Value = UpperBValue;
+					NewRangeV2.SetUpperBoundValue(TT);
+				
+					FFrameNumber LL;
+					LL.Value = LowerBValue;
+					if (LowerBType == "Inclusive") {
+						NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(LL));
+					} else {
+						NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Exclusive(LL));
+					}
+				
+					if (UpperBType == "Inclusive") {
+						NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(TT));
+					} else {
+						NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Exclusive(TT));
+					}
+					FloatSection->SetRange(NewRangeV2);
 				}
-				FloatSection->SetRange(NewRangeV2);
 			}
 		}
     	
