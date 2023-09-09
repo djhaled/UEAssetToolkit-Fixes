@@ -19,7 +19,7 @@ protected:
 	void ReimportAnimationFromSource(UAnimSequence* Asset);
 	bool IsAnimationSourceUpToDate(UAnimSequence* Asset) const;
 
-	void SetupFbxImportSettings(UFbxImportUI* ImportUI) const;
+	bool SetupFbxImportSettings(UFbxImportUI* ImportUI) const;
 	void SetupPsaImportSettings(UPSAFactory* ImportUI) const;
 public:
 	virtual void PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const override;

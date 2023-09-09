@@ -14,6 +14,7 @@ void UAnimSequenceGenerator::CreateAssetPackage() {
 #endif
 *GetPackageName().ToString());
 	UAnimSequence* NewAnimSequence = ImportAnimation(NewPackage, GetAssetName(), RF_Public | RF_Standalone);
+	if (NewAnimSequence == NULL) return;
 	SetPackageAndAsset(NewPackage, NewAnimSequence);
 	//PopulateAnimationProperties(NewAnimSequence);
 }
@@ -23,7 +24,7 @@ void UAnimSequenceGenerator::OnExistingPackageLoaded() {
 	
 	if (!IsAnimationSourceUpToDate(ExistingAnimation)) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing AnimationSequence %s Source File"), *GetPackageName().ToString());
-		ReimportAnimationFromSource(ExistingAnimation);
+		//ReimportAnimationFromSource(ExistingAnimation);
 	}
 	
 	if (!IsAnimationPropertiesUpToDate(ExistingAnimation)) {
@@ -37,12 +38,16 @@ UAnimSequence* UAnimSequenceGenerator::ImportAnimation(UPackage* Package, const 
 	
 	AnimationFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(AnimationFactory));
 	AnimationFactory->SetDetectImportTypeOnImport(false);
-	SetupFbxImportSettings(AnimationFactory->ImportUI);
+	const bool LowFrameWarning = SetupFbxImportSettings(AnimationFactory->ImportUI);
 
 	const FString AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));
 	
 	bool bOperationCancelled = false;
 	UObject* ResultAnimation = AnimationFactory->ImportObject(UAnimSequence::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
+	if (LowFrameWarning && ResultAnimation == NULL) {
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Anim %s not imported due to having only one or two frames, skipping!"), *GetPackageName().ToString());
+		return NULL;
+	}
 	
 	checkf(ResultAnimation, TEXT("Failed to import AnimSequence %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
 	checkf(ResultAnimation->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultAnimation->GetOuter()->GetPathName());
@@ -57,7 +62,11 @@ void UAnimSequenceGenerator::ReimportAnimationFromSource(UAnimSequence* Asset) {
 	
 	AnimationFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(AnimationFactory));
 	AnimationFactory->SetDetectImportTypeOnImport(false);
-	SetupFbxImportSettings(AnimationFactory->ImportUI);
+	if (SetupFbxImportSettings(AnimationFactory->ImportUI))
+	{
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Anim %s not imported due to having only one or two frames, skipping!"), *GetPackageName().ToString());
+		return;
+	}
 	
 	const FString AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));
 	
@@ -66,7 +75,7 @@ void UAnimSequenceGenerator::ReimportAnimationFromSource(UAnimSequence* Asset) {
 	MarkAssetChanged();
 }
 
-void UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) const {
+bool UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) const {
 	ImportUI->MeshTypeToImport = FBXIT_Animation;
 	ImportUI->bOverrideFullName = true;
 	ImportUI->bImportMaterials = false;
@@ -81,17 +90,37 @@ void UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 	ImportUI->AnimSequenceImportData = NewObject<UFbxAnimSequenceImportData>(ImportUI, NAME_None, RF_NoFlags);
 	ImportUI->AnimSequenceImportData->bRemoveRedundantKeys = true;
 	
-	const int32 NumFrames = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("NumFrames"));
-	ImportUI->AnimSequenceImportData->AnimationLength = EFBXAnimationLengthImportType::FBXALIT_SetRange;
-	ImportUI->AnimSequenceImportData->FrameImportRange = FInt32Interval(0, NumFrames - 1);
-	
-	const double SequenceLength = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetNumberField(TEXT("SequenceLength"));
+	int32 NumFrames = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("NumFrames"));
+	ImportUI->AnimSequenceImportData->AnimationLength = FBXALIT_SetRange;
+
+	const bool LowFrameWarning = NumFrames <= 2;
+
+	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = false;
+
 	double RateScale = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetNumberField(TEXT("RateScale"));
 	if (RateScale == 0) RateScale = 1;
-	ImportUI->AnimSequenceImportData->bUseDefaultSampleRate = false;
-	const int32 CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength) * RateScale;
-	UE_LOG(LogAssetGenerator, Log, TEXT("CustomSampleRate: %d"), CustomSampleRate);
-	ImportUI->AnimSequenceImportData->CustomSampleRate = CustomSampleRate;
+
+	// Limit the frame range to 3k otherwise we'll never import the full animation...
+	// TODO: Make this an option if required?
+	const int32 MAX_FRAMES = 3000;
+	if (NumFrames > MAX_FRAMES) {
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Limiting num frames of %s to %d"), *GetPackageName().ToString(), MAX_FRAMES);
+		NumFrames = MAX_FRAMES;
+		ImportUI->AnimSequenceImportData->CustomSampleRate = 60 * RateScale;
+	} else {
+		const double SequenceLength = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetNumberField(TEXT("SequenceLength"));
+		const int32 CustomSampleRate = FMath::CeilToInt((float)NumFrames / (float)SequenceLength) * RateScale;
+		ImportUI->AnimSequenceImportData->CustomSampleRate = CustomSampleRate;
+		
+		UE_LOG(LogAssetGenerator, Log, TEXT("SequenceLength: %f"), SequenceLength);
+		UE_LOG(LogAssetGenerator, Log, TEXT("RateScale: %f"), RateScale);
+		UE_LOG(LogAssetGenerator, Log, TEXT("CustomSampleRate: %d"), CustomSampleRate);
+	}
+
+	UE_LOG(LogAssetGenerator, Log, TEXT("NumFrames: %d"), NumFrames);
+	ImportUI->AnimSequenceImportData->FrameImportRange = FInt32Interval(0, NumFrames - 1);
+
+	return LowFrameWarning;
 }
 
 void UAnimSequenceGenerator::SetupPsaImportSettings(UPSAFactory* ImportUI) const {

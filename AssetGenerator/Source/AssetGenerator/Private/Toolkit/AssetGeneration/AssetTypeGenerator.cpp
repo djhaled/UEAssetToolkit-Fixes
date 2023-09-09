@@ -105,6 +105,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 	if (ExistingPackage == NULL) {
 		//Make new package if we don't have existing one, make sure asset object is also allocated
 		CreateAssetPackage();
+		if (AssetPackage == NULL) return; // Sometimes we are skipping assets, so we need to return early.
 		checkf(AssetPackage, TEXT("CreateAssetPackage should call SetPackageAndAsset"));
 
 		//Make sure to mark package as changed because it has never been saved to disk before
@@ -112,7 +113,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 	} else {
 		//Package already exist, reuse it while making sure out asset is contained within
 		UObject* AssetObject = FindObject<UObject>(ExistingPackage, *AssetName.ToString());
-		if (AssetObject == NULL) return; // TODO: Yes, I know this is a horrible hackfix, but it seems to mostly work. Needs a proper fix though.
+		if (AssetObject == NULL) return;
 		
 		//We need to verify package exists and provide meaningful error message, so user knows what is wrong
 		checkf(AssetObject, TEXT("Existing package %s does not contain an asset named %s, requested by asset dump"), *PackageName.ToString(), *AssetName.ToString());
