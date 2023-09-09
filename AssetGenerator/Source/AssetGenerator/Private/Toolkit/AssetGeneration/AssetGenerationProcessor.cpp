@@ -164,7 +164,8 @@ void FAssetGenerationProcessor::MarkExternalPackageDependencySatisfied(FName Pac
 
 void FAssetGenerationProcessor::MarkPackageAsNotFound(FName PackageName) {
 	this->KnownMissingPackages.Add(PackageName);
-	UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find external package '%s'"), *PackageName.ToString());
+	if (!PackageName.ToString().StartsWith("NS"))
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find external package '%s'"), *PackageName.ToString());
 }
 
 void FAssetGenerationProcessor::MarkPackageSkipped(const FName PackageName, const FString& Reason) {

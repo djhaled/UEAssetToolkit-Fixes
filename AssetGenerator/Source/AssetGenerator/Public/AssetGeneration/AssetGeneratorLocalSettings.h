@@ -36,16 +36,4 @@ public:
 	/** Whenever we are generating a public project */
 	UPROPERTY(EditAnywhere, Config, Category = "Asset Generator")
 	bool bGeneratePublicProject;
-
-	/** Whenever we are generating FBX static meshes */
-	UPROPERTY(EditAnywhere, Config, Category = "Asset Generator")
-	bool bUseSmFbx;
-
-	/** Whenever we are generating FBX skeletal meshes */
-	UPROPERTY(EditAnywhere, Config, Category = "Asset Generator")
-	bool bUseSkmFbx;
-
-	/** Whenever we are generating FBX animations */
-	UPROPERTY(EditAnywhere, Config, Category = "Asset Generator")
-	bool bUseAnimFbx;
 };

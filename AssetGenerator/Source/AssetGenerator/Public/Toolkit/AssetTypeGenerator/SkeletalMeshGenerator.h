@@ -20,6 +20,8 @@ protected:
 
 	void SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) const;
 	virtual void GetAdditionalPackagesToSave(TArray<UPackage*>& OutPackages) override;
+
+	UPhysicsAsset* GetPhysicsAssetReference() const;
 public:
 	virtual void PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const override;
 	virtual FName GetAssetClass() override;

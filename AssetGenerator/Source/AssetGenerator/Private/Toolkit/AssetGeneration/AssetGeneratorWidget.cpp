@@ -65,9 +65,6 @@ FReply SAssetGeneratorWidget::OnGenerateAssetsButtonPressed() {
 	Configuration.bRefreshExistingAssets = LocalSettings->bRefreshExistingAssets;
 	Configuration.MaxAssetsToAdvancePerTick = LocalSettings->MaxAssetsToAdvancePerTick;
 	Configuration.bGeneratePublicProject = LocalSettings->bGeneratePublicProject;
-	Configuration.bUseSmFbx = LocalSettings->bUseSmFbx;
-	Configuration.bUseSkmFbx = LocalSettings->bUseSkmFbx;
-	Configuration.bUseAnimFbx = LocalSettings->bUseAnimFbx;
 	
 	FAssetGenerationProcessor::CreateAssetGenerator(Configuration, SelectedAssetPackages);
 	return FReply::Handled();
