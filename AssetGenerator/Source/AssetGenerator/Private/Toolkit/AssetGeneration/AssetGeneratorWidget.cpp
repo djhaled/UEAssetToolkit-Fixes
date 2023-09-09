@@ -75,7 +75,7 @@ TSharedRef<SWidget> SAssetGeneratorWidget::CreateAssetTypeFilterCategory()
 	TSharedRef<SHorizontalBox> AssetTypesHolder = SNew(SHorizontalBox);
 	TSharedPtr<SVerticalBox> CurrentVerticalBox;
 	int32 AssetTypesStored = 0;
-	const int32 MaxAssetTypesPerRow = 8;
+	const int32 MaxAssetTypesPerRow = 9;
 	
 	TSet<FName> AllAssetClasses;
 
