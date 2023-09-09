@@ -30,8 +30,7 @@ public class AssetGenerator : ModuleRules
             "UMGEditor",
 			"BlueprintGraph",
             "MovieSceneTracks",
-            "AssetDumper",
-            "UnrealPSKPSA"
+            "AssetDumper"
         });
         
 		PrivateDependencyModuleNames.AddRange(new[] {

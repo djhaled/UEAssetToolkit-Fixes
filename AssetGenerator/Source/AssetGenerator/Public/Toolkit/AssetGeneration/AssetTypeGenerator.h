@@ -46,7 +46,6 @@ private:
 	bool bIsGeneratingPublicProject;
 	bool bIsStageNotOverriden;
 	bool bSkipAnim;
-	TArray<bool> bUseFbx; // 0 = pskx, 1 = psk, 2 = psa
 	
 	UPROPERTY()
     UObjectHierarchySerializer* ObjectSerializer;
@@ -78,9 +77,6 @@ protected:
 	FORCEINLINE bool IsGeneratingPublicProject() const { return bIsGeneratingPublicProject; }
 
 	FORCEINLINE TSharedPtr<FJsonObject> GetAssetObjectData() const { return AssetData->GetObjectField(TEXT("AssetObjectData")); }
-
-	/** Returns the bUseFbx array */
-	FORCEINLINE TArray<bool> GetUseFbx() const { return bUseFbx; }
 
 	/** Marks asset as changed by this generator */
 	void MarkAssetChanged();

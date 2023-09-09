@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Animation/AnimSequence.h"
-#include "UnrealPSKPSA/Public/PSAFactory.h"
 #include "Toolkit/AssetGeneration/AssetTypeGenerator.h"
 #include "AnimSequenceGenerator.generated.h"
 
@@ -20,7 +19,6 @@ protected:
 	bool IsAnimationSourceUpToDate(UAnimSequence* Asset) const;
 
 	bool SetupFbxImportSettings(UFbxImportUI* ImportUI) const;
-	void SetupPsaImportSettings(UPSAFactory* ImportUI) const;
 public:
 	virtual void PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const override;
 	virtual FName GetAssetClass() override;

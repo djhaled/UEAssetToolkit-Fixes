@@ -26,7 +26,7 @@ void UStaticMeshGenerator::CreateAssetPackage() {
 void UStaticMeshGenerator::OnExistingPackageLoaded() {
 	UStaticMesh* ExistingMesh = GetAsset<UStaticMesh>();
 	
-	if (!IsStaticMeshSourceFileUpToDate(ExistingMesh) && GetUseFbx()[0]) {
+	if (!IsStaticMeshSourceFileUpToDate(ExistingMesh)) {
 		UE_LOG(LogAssetGenerator, Log, TEXT("Refreshing StaticMesh %s Source Model"), *GetPackageName().ToString());
 		ReimportStaticMeshSource(ExistingMesh);
 	}
@@ -37,44 +37,25 @@ void UStaticMeshGenerator::OnExistingPackageLoaded() {
 }
 
 UStaticMesh* UStaticMeshGenerator::ImportStaticMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) {
-	UObject* ResultMesh;
-	if (GetUseFbx()[0]) {
-		UFbxFactory* StaticMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
+	UFbxFactory* StaticMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
 	
-		StaticMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(StaticMeshFactory));
-		StaticMeshFactory->SetDetectImportTypeOnImport(false);
-		SetupFbxImportSettings(StaticMeshFactory->ImportUI);
+	StaticMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(StaticMeshFactory));
+	StaticMeshFactory->SetDetectImportTypeOnImport(false);
+	SetupFbxImportSettings(StaticMeshFactory->ImportUI);
 
-		FString AssetFbxFilePath;
-		if (!IsGeneratingPublicProject()) {
-			AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));
-		} else {
-			AssetFbxFilePath = FPublicProjectStubHelper::EditorCube.GetFullFilePath();
-		}
-	
-		bool bOperationCancelled = false;
-		ResultMesh = StaticMeshFactory->ImportObject(UStaticMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
-	
-		checkf(ResultMesh, TEXT("Failed to import StaticMesh %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
-		checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
-		checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
+	FString AssetFbxFilePath;
+	if (!IsGeneratingPublicProject()) {
+		AssetFbxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("fbx"));
 	} else {
-		UPSKXFactory* StaticMeshFactory = NewObject<UPSKXFactory>(GetTransientPackage(), NAME_None);
-
-		FString AssetPskxFilePath;
-		if (!IsGeneratingPublicProject()) {
-			AssetPskxFilePath = GetAdditionalDumpFilePath(TEXT(""), TEXT("pskx"));
-		} else {
-			AssetPskxFilePath = FPublicProjectStubHelper::EditorCube.GetFullFilePath();
-		}
-
-		bool bOperationCancelled = false;
-		ResultMesh = StaticMeshFactory->ImportObject(UStaticMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetPskxFilePath, TEXT(""), bOperationCancelled);
-	
-		checkf(ResultMesh, TEXT("Failed to import StaticMesh %s from PSKX file %s. See log for errors"), *GetPackageName().ToString(), *AssetPskxFilePath);
-		checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
-		checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
+		AssetFbxFilePath = FPublicProjectStubHelper::EditorCube.GetFullFilePath();
 	}
+	
+	bool bOperationCancelled = false;
+	UObject* ResultMesh = StaticMeshFactory->ImportObject(UStaticMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
+	
+	checkf(ResultMesh, TEXT("Failed to import StaticMesh %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
+	checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
+	checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
 	
 	return CastChecked<UStaticMesh>(ResultMesh);
 }

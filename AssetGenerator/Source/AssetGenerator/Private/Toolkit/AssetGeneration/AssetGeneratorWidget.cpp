@@ -237,57 +237,6 @@ TSharedRef<SWidget> SAssetGeneratorWidget::CreateSettingsCategory() {
 					LocalSettings->SaveConfig();
 				})
 		   ]
-		]
-		+SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.0f, 2.0f))[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Center).VAlign(VAlign_Center)[
-				SNew(STextBlock)
-				.Text(LOCTEXT("AssetGenerator_UseSmFbx", "Use Static Mesh FBX?     "))
-			]
-		   +SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Center).VAlign(VAlign_Center)[
-				SNew(SCheckBox)
-				.IsChecked_Lambda([this]() {
-					return LocalSettings->bUseSmFbx ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-				})
-				.OnCheckStateChanged_Lambda([this](const ECheckBoxState NewState) {
-					LocalSettings->bUseSmFbx = NewState == ECheckBoxState::Checked;
-					LocalSettings->SaveConfig();
-				})
-		   ]
-		]
-		+SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.0f, 2.0f))[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Center).VAlign(VAlign_Center)[
-				SNew(STextBlock)
-				.Text(LOCTEXT("AssetGenerator_UseSlmFbx", "Use Skeletal Mesh FBX?  "))
-			]
-		   +SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Right).VAlign(VAlign_Center)[
-				SNew(SCheckBox)
-				.IsChecked_Lambda([this]() {
-					return LocalSettings->bUseSkmFbx ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-				})
-				.OnCheckStateChanged_Lambda([this](const ECheckBoxState NewState) {
-					LocalSettings->bUseSkmFbx = NewState == ECheckBoxState::Checked;
-					LocalSettings->SaveConfig();
-				})
-		   ]
-		]
-		+SVerticalBox::Slot().AutoHeight().Padding(FMargin(5.0f, 2.0f))[
-			SNew(SHorizontalBox)
-			+SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Center).VAlign(VAlign_Center)[
-				SNew(STextBlock)
-				.Text(LOCTEXT("AssetGenerator_UseAnimFbx", "Use Animation FBX?       "))
-			]
-		   +SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Center).VAlign(VAlign_Center)[
-				SNew(SCheckBox)
-				.IsChecked_Lambda([this]() {
-					return LocalSettings->bUseAnimFbx ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-				})
-				.OnCheckStateChanged_Lambda([this](const ECheckBoxState NewState) {
-					LocalSettings->bUseAnimFbx = NewState == ECheckBoxState::Checked;
-					LocalSettings->SaveConfig();
-				})
-		   ]
 		];
 }
 

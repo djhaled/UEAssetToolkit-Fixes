@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Toolkit/AssetGeneration/AssetTypeGenerator.h"
-#include "UnrealPSKPSA/Public/PSKFactory.h"
 #include "SkeletalMeshGenerator.generated.h"
 
 UCLASS(MinimalAPI)
@@ -20,7 +19,6 @@ protected:
 	bool IsSkeletalMeshSourceFileUpToDate(USkeletalMesh* Asset) const;
 
 	void SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) const;
-	void SetupPskImportSettings(UPSKFactory* ImportFactory) const;
 	virtual void GetAdditionalPackagesToSave(TArray<UPackage*>& OutPackages) override;
 public:
 	virtual void PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const override;

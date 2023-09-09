@@ -123,10 +123,6 @@ bool UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 	return LowFrameWarning;
 }
 
-void UAnimSequenceGenerator::SetupPsaImportSettings(UPSAFactory* ImportUI) const {
-	
-}
-
 void UAnimSequenceGenerator::PopulateAnimationProperties(UAnimSequence* Asset) {
 	const TSharedPtr<FJsonObject> AssetData = GetAssetData();
 	const TSharedPtr<FJsonObject> AssetObjectProperties = AssetData->GetObjectField(TEXT("AssetObjectData"));
