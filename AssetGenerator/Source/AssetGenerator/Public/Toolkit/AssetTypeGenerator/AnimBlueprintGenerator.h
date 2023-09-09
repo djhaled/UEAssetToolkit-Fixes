@@ -14,7 +14,7 @@ protected:
 
 	virtual UBlueprint* CreateNewBlueprint(UPackage* Package, UClass* ParentClass) override;
 	//virtual void PostConstructOrUpdateAsset(UBlueprint* Blueprint);
-	//virtual void PopulateAssetWithData() override;
+	virtual void PopulateAssetWithData() override;
 	//virtual void FinalizeAssetCDO() override;
 	//void UpdateDeserializerBlueprintClassObject(bool bRecompileBlueprint);
 	//virtual UClass* GetFallbackParentClass() const;
