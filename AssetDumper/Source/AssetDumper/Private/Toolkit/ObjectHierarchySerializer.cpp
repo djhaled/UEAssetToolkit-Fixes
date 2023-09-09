@@ -370,7 +370,7 @@ void UObjectHierarchySerializer::DeserializeObjectProperties(const TSharedPtr<FJ
     UClass* ObjectClass = Object->GetClass();
     for (FProperty* Property = ObjectClass->PropertyLink; Property; Property = Property->PropertyLinkNext) {
         const FString PropertyName = Property->GetName();
-    	UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+    	//UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
 
     	if (PropertyName == "PropertyName") {
 			if (auto SceneProp = Cast<UMovieScenePropertyTrack>(Object)) {
@@ -396,9 +396,12 @@ void UObjectHierarchySerializer::DeserializeObjectProperties(const TSharedPtr<FJ
 				auto LowerB = SectionRangeObject.Get()->Values.Find("LowerBound")->Get()->AsObject();
 				auto LowerBType = LowerB.Get()->Values.Find("Type")->Get()->AsString();
 				auto LowerBValue = LowerB.Get()->Values.Find("Value")->Get()->AsNumber();
-				UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("The Prop's name is %s"), *Property->GetName());
+
 				TRange<FFrameNumber> NewRangeV2;
-				NewRangeV2 = FloatSection->GetRange();
+				NewRangeV2.SetUpperBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
+				NewRangeV2.SetLowerBound(TRangeBound<FFrameNumber>::Inclusive(FFrameNumber(0)));
+				//NewRangeV2 = FloatSection->GetRange();
 				FFrameNumber TT;
 				TT.Value = UpperBValue;
 				NewRangeV2.SetUpperBoundValue(TT);

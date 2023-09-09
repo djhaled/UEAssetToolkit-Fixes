@@ -68,8 +68,11 @@ void FAssetGenerationProcessor::RefreshGeneratorDependencies(UAssetTypeGenerator
 			
 		} else if (AddPackageResult == EAddPackageResult::PACKAGE_NOT_FOUND) {
 			//Print warning when our dependency packages are missing
-			UE_LOG(LogAssetGenerator, Warning, TEXT("Package %s, requested by %s, is missing. Resulting data might be incorrect or partially missing!"),
-				*DependencyPackageName.ToString(), *PackageName.ToString());
+			FString AssetName = DependencyPackageName.ToString();
+			AssetName = AssetName.RightChop(AssetName.Find("/", ESearchCase::IgnoreCase, ESearchDir::FromEnd) + 1);
+			if (!AssetName.StartsWith("NS"))
+				UE_LOG(LogAssetGenerator, Warning, TEXT("Package %s, requested by %s, is missing. Resulting data might be incorrect or partially missing!"),
+					*DependencyPackageName.ToString(), *PackageName.ToString());
 		}
 	}
 
@@ -164,7 +167,9 @@ void FAssetGenerationProcessor::MarkExternalPackageDependencySatisfied(FName Pac
 
 void FAssetGenerationProcessor::MarkPackageAsNotFound(FName PackageName) {
 	this->KnownMissingPackages.Add(PackageName);
-	if (!PackageName.ToString().StartsWith("NS"))
+	FString AssetName = PackageName.ToString();
+	AssetName = AssetName.RightChop(AssetName.Find("/", ESearchCase::IgnoreCase, ESearchDir::FromEnd) + 1);
+	if (!AssetName.StartsWith("NS"))
 		UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find external package '%s'"), *PackageName.ToString());
 }
 
