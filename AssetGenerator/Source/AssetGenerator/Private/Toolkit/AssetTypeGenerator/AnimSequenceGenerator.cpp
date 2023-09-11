@@ -84,8 +84,13 @@ bool UAnimSequenceGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) cons
 	ImportUI->OverrideAnimationName = GetAssetName().ToString();
 
 	const int32 SkeletonObjectIndex = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("Skeleton"));
-	USkeleton* Skeleton = CastChecked<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));
-	ImportUI->Skeleton = Skeleton;
+	USkeleton* Skeleton = Cast<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));
+	if (Skeleton) {
+		ImportUI->Skeleton = Skeleton;	
+	} else {
+		UE_LOG(LogAssetGenerator, Error, TEXT("Failed to find skeleton for animation %s"), *GetPackageName().ToString());
+		return true;
+	}
 
 	ImportUI->AnimSequenceImportData = NewObject<UFbxAnimSequenceImportData>(ImportUI, NAME_None, RF_NoFlags);
 	ImportUI->AnimSequenceImportData->bRemoveRedundantKeys = true;

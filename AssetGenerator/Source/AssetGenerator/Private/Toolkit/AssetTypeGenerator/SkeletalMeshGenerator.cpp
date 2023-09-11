@@ -116,6 +116,9 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 		USkeleton* Skeleton = Cast<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
 		if (Skeleton) {
 			ImportUI->Skeleton = Skeleton;
+		} else {
+			UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find skeleton for SkeletalMesh %s. Using default skeleton"), *GetPackageName().ToString());
+			ImportUI->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
 		}
 	} else {
 		ImportUI->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
@@ -127,7 +130,6 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 	ImportUI->SkeletalMeshImportData->bUpdateSkeletonReferencePose = false;
 
 	if (!IsGeneratingPublicProject()) {
-		ImportUI->bCreatePhysicsAsset = true;
 		UPhysicsAsset* PhysicsAsset = GetPhysicsAssetReference();
 		if (PhysicsAsset) {
 			ImportUI->bCreatePhysicsAsset = false;
