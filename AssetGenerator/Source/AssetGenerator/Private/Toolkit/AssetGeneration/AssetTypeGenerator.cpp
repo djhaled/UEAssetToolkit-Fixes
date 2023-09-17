@@ -50,31 +50,35 @@ UAssetTypeGenerator::UAssetTypeGenerator() {
 	this->bAssetChanged = false;
 	this->bHasAssetEverBeenChanged = false;
 	this->bIsGeneratingPublicProject = false;
-	this->bSkipAnim = true;
+	this->bSkipAnim = false;
 }
 
-void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject) {
+void UAssetTypeGenerator::InitializeInternal(const FString& DumpRootDirectory, const FString& InPackageBaseDirectory, const FName InPackageName, const TSharedPtr<FJsonObject> RootFileObject, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx) {
 	this->DumpRootDirectory = DumpRootDirectory;
 	this->PackageBaseDirectory = InPackageBaseDirectory;
 	this->PackageName = FName(*RootFileObject->GetStringField(TEXT("AssetPackage")));
 	this->AssetName = FName(*RootFileObject->GetStringField(TEXT("AssetName")));
-	//checkf(this->PackageName == InPackageName, TEXT("InitializeInternal called with inconsistent package name. Externally provided name was '%s', but internal dump package name is '%s'"),
-		//*InPackageName.ToString(), *this->PackageName.ToString());
+	checkf(this->PackageName == InPackageName, TEXT("InitializeInternal called with inconsistent package name. Externally provided name was '%s', but internal dump package name is '%s'"),
+		*InPackageName.ToString(), *this->PackageName.ToString());
 
 	const TArray<TSharedPtr<FJsonValue>> ObjectHierarchy = RootFileObject->GetArrayField(TEXT("ObjectHierarchy"));
 	this->ObjectSerializer->InitializeForDeserialization(ObjectHierarchy);
 	this->AssetData = RootFileObject->GetObjectField(TEXT("AssetSerializedData"));
+	this->AssetClass = AssetData->GetStringField(TEXT("AssetClass"));
 	this->bIsGeneratingPublicProject = bGeneratePublicProject;
 	PostInitializeAssetGenerator();
 }
 
 bool UAssetTypeGenerator::IsDumbAsset()
 {
-	return false;
-	if (//GetClass()->GetName() == "AnimBlueprintGenerator"
-		//|| GetClass()->GetName() == "BlendSpaceGenerator"
-		/*|| GetAssetName().ToString().Contains("AIC_")*/ /*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
-		 bSkipAnim)
+	// Sometimes when generating, some assets or asset types cause consistent crashes due to missing data
+	// so we may want to filter them out. This is a temporary solution per generation/project.
+	// Here are some examples:
+	/*GetClass()->GetName() == "AnimBlueprintGenerator"*/
+	/*|| GetClass()->GetName() == "BlendSpaceGenerator"*/
+	/*|| GetAssetName().ToString().Contains("AIC_")*/
+	/*|| GetPackageBaseDirectory() == L"F:/DRG Modding/DRGPacker/JSON/Assets/Game/Critters/Prospector"*/
+	if (bSkipAnim)
 	{
 		UE_LOG(LogAssetGenerator, Warning, TEXT("Skipping asset %s"), *GetAssetName().ToString());
 		return true;
@@ -98,6 +102,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 	if (ExistingPackage == NULL) {
 		//Make new package if we don't have existing one, make sure asset object is also allocated
 		CreateAssetPackage();
+		if (AssetPackage == NULL) return; // Sometimes we are skipping assets, so we need to return early.
 		checkf(AssetPackage, TEXT("CreateAssetPackage should call SetPackageAndAsset"));
 
 		//Make sure to mark package as changed because it has never been saved to disk before
@@ -105,7 +110,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 	} else {
 		//Package already exist, reuse it while making sure out asset is contained within
 		UObject* AssetObject = FindObject<UObject>(ExistingPackage, *AssetName.ToString());
-		if (AssetObject == NULL) return; // TODO: Yes, I know this is a horrible hackfix, but it seems to mostly work. Needs a proper fix though.
+		if (AssetObject == NULL) return;
 		
 		//We need to verify package exists and provide meaningful error message, so user knows what is wrong
 		checkf(AssetObject, TEXT("Existing package %s does not contain an asset named %s, requested by asset dump"), *PackageName.ToString(), *AssetName.ToString());
@@ -119,6 +124,7 @@ void UAssetTypeGenerator::ConstructAssetAndPackage() {
 
 void UAssetTypeGenerator::MarkAssetChanged() {
 	this->bAssetChanged = true;
+	this->bHasAssetEverBeenChanged = true;
 	if (this->AssetPackage) {
 		this->AssetPackage->MarkPackageDirty();
 	}
@@ -161,15 +167,16 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 	if (CurrentStage == EAssetGenerationStage::FINISHED) {
 		return FGeneratorStateAdvanceResult{CurrentStage, false};
 	}
+	
 	//Dispatch current stage call to the appropriate method
 	if (CurrentStage == EAssetGenerationStage::CONSTRUCTION) {
 		this->ConstructAssetAndPackage();
 	}
 	if (CurrentStage == EAssetGenerationStage::DATA_POPULATION) {
-		if (!IsDumbAsset()) this->PopulateAssetWithData();
+		/*if (AssetObject != NULL)*/ this->PopulateAssetWithData();
 	}
 	if (CurrentStage == EAssetGenerationStage::CDO_FINALIZATION) {
-		if (!IsDumbAsset()) this->FinalizeAssetCDO();
+		/*if (AssetObject != NULL)*/ this->FinalizeAssetCDO();
 	}
 	if (CurrentStage == EAssetGenerationStage::PRE_FINSHED) {
 		if (AssetObject != NULL) this->PreFinishAssetGeneration();
@@ -180,6 +187,10 @@ FGeneratorStateAdvanceResult UAssetTypeGenerator::AdvanceGenerationState() {
 	
 	//Force package to be saved to disk if it has been marked as changed, which should have also marked it as dirty
 	if (bAssetChanged) {
+		if (AssetClass == "/Script/Engine.AnimSequence") {
+			AssetPackage->FullyLoad();
+		}
+		
 		TArray<UPackage*> PackagesToSave;
 		PackagesToSave.Add(AssetPackage);
 		GetAdditionalPackagesToSave(PackagesToSave);
@@ -204,7 +215,7 @@ FString UAssetTypeGenerator::GetAssetFilePath(const FString& RootDirectory, FNam
 	return FPaths::Combine(PackageBaseDirectory, AssetDumpFilename);
 }
 
-UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& RootDirectory, const FName PackageName, bool bGeneratePublicProject) {
+UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& RootDirectory, const FName PackageName, bool bGeneratePublicProject, bool bUseSmFbx, bool bUseSkmFbx, bool bUseAnimFbx) {
 	const FString AssetDumpFilePath = GetAssetFilePath(RootDirectory, PackageName);
 	const FString PackageBaseDirectory = FPaths::GetPath(AssetDumpFilePath);
 
@@ -234,7 +245,7 @@ UAssetTypeGenerator* UAssetTypeGenerator::InitializeFromFile(const FString& Root
 	}
 
 	UAssetTypeGenerator* NewGenerator = NewObject<UAssetTypeGenerator>(GetTransientPackage(), AssetTypeGenerator);
-	NewGenerator->InitializeInternal(RootDirectory, PackageBaseDirectory, PackageName, RootFileObject, bGeneratePublicProject);
+	NewGenerator->InitializeInternal(RootDirectory, PackageBaseDirectory, PackageName, RootFileObject, bGeneratePublicProject, bUseSmFbx, bUseSkmFbx, bUseAnimFbx);
 	return NewGenerator;
 }
 

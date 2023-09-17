@@ -13,13 +13,15 @@ protected:
 	void PopulateSkeletalMeshProperties(USkeletalMesh* Asset);
 	bool IsSkeletalMeshPropertiesUpToDate(USkeletalMesh* Asset) const;
 	
-	USkeletalMesh* ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags);
+	USkeletalMesh* ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) const;
 	
 	void ReimportSkeletalMeshSource(USkeletalMesh* Asset);
 	bool IsSkeletalMeshSourceFileUpToDate(USkeletalMesh* Asset) const;
 
-	void SetupFbxImportSettings(class UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package);
+	void SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) const;
 	virtual void GetAdditionalPackagesToSave(TArray<UPackage*>& OutPackages) override;
+
+	UPhysicsAsset* GetPhysicsAssetReference() const;
 public:
 	virtual void PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const override;
 	virtual FName GetAssetClass() override;

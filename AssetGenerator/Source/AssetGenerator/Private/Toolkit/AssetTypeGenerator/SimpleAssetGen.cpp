@@ -11,7 +11,7 @@ FName USimpleAssetGen::GetAssetClass() {
 }
 
 void USimpleAssetGen::PopulateStageDependencies(TArray<FPackageDependency>& OutDependencies) const {
-	if (!GetAssetData()->GetBoolField(TEXT("SkipDependecies"))) {
+	if (!GetAssetData()->HasField(TEXT("SkipDependecies")) || !GetAssetData()->GetBoolField(TEXT("SkipDependecies"))) {
 		if (GetCurrentStage() == EAssetGenerationStage::CONSTRUCTION) {
 			PopulateReferencedObjectsDependencies(OutDependencies);
 		}

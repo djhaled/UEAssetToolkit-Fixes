@@ -68,8 +68,11 @@ void FAssetGenerationProcessor::RefreshGeneratorDependencies(UAssetTypeGenerator
 			
 		} else if (AddPackageResult == EAddPackageResult::PACKAGE_NOT_FOUND) {
 			//Print warning when our dependency packages are missing
-			UE_LOG(LogAssetGenerator, Warning, TEXT("Package %s, requested by %s, is missing. Resulting data might be incorrect or partially missing!"),
-				*DependencyPackageName.ToString(), *PackageName.ToString());
+			FString AssetName = DependencyPackageName.ToString();
+			AssetName = AssetName.RightChop(AssetName.Find("/", ESearchCase::IgnoreCase, ESearchDir::FromEnd) + 1);
+			if (!AssetName.StartsWith("NS"))
+				UE_LOG(LogAssetGenerator, Warning, TEXT("Package %s, requested by %s, is missing. Resulting data might be incorrect or partially missing!"),
+					*DependencyPackageName.ToString(), *PackageName.ToString());
 		}
 	}
 
@@ -128,6 +131,9 @@ FAssetGeneratorConfiguration::FAssetGeneratorConfiguration() :
 		DumpRootDirectory(FPaths::ProjectDir() + TEXT("AssetDump/")),
 		MaxAssetsToAdvancePerTick(4),
 		bRefreshExistingAssets(true),
+		bUseSmFbx(true),
+		bUseSkmFbx(true),
+		bUseAnimFbx(true),
 		bGeneratePublicProject(false),
 		bTickOnTheSide(false) {
 }
@@ -161,7 +167,10 @@ void FAssetGenerationProcessor::MarkExternalPackageDependencySatisfied(FName Pac
 
 void FAssetGenerationProcessor::MarkPackageAsNotFound(FName PackageName) {
 	this->KnownMissingPackages.Add(PackageName);
-	UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find external package '%s'"), *PackageName.ToString());
+	FString AssetName = PackageName.ToString();
+	AssetName = AssetName.RightChop(AssetName.Find("/", ESearchCase::IgnoreCase, ESearchDir::FromEnd) + 1);
+	if (!AssetName.StartsWith("NS"))
+		UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find external package '%s'"), *PackageName.ToString());
 }
 
 void FAssetGenerationProcessor::MarkPackageSkipped(const FName PackageName, const FString& Reason) {
@@ -210,7 +219,7 @@ EAddPackageResult FAssetGenerationProcessor::AddPackage(const FName PackageName)
 	}
 	
 	//First, try to extract package from the dump
-	UAssetTypeGenerator* AssetTypeGenerator = UAssetTypeGenerator::InitializeFromFile(Configuration.DumpRootDirectory, PackageName, Configuration.bGeneratePublicProject);
+	UAssetTypeGenerator* AssetTypeGenerator = UAssetTypeGenerator::InitializeFromFile(Configuration.DumpRootDirectory, PackageName, Configuration.bGeneratePublicProject, Configuration.bUseSmFbx, Configuration.bUseSkmFbx, Configuration.bUseAnimFbx);
 	if (AssetTypeGenerator != NULL) {
 		FString OutSkipReason;
 		//Skip the package if it's not whitelisted by the configuration

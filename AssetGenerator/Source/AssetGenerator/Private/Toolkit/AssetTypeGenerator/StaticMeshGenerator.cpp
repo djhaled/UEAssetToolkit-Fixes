@@ -89,6 +89,7 @@ void UStaticMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI) const 
 	ImportUI->StaticMeshImportData->NormalImportMethod = FBXNIM_ImportNormalsAndTangents;
 	ImportUI->StaticMeshImportData->VertexColorImportOption = EVertexColorImportOption::Replace;
 	ImportUI->StaticMeshImportData->bAutoGenerateCollision = true;
+	//ImportUI->StaticMeshImportData->ImportUniformScale = 0.01f;
 
 	const TSharedPtr<FJsonObject> AssetData = GetAssetData();	
 	const TArray<TSharedPtr<FJsonValue>> ScreenSize = AssetData->GetArrayField(TEXT("ScreenSize"));

@@ -5,9 +5,6 @@
 #include "Toolkit/AssetTypeGenerator/BlueprintGenerator.h"
 #include "UserDefinedStructure/UserDefinedStructEditorData.h"
 
-
-
-
 void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName& OutCategory, FName& OutSubCategory, UObject*& OutSubCategoryObject, bool& bOutIsWeakPointer, class UObjectHierarchySerializer* ObjectSerializer);
 
 bool HasAllPropertyFlags(EPropertyFlags PropertyFlags, EPropertyFlags FlagsToCheck) {
@@ -241,6 +238,11 @@ void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName
 		const int32 MetaClassIndex = PropertyObject->GetIntegerField(TEXT("MetaClass"));
 		OutSubCategoryObject = ObjectSerializer->DeserializeObject(MetaClassIndex);
 		
+	} else if (FieldClass->IsChildOf(FSoftObjectProperty::StaticClass())) {
+		OutCategory = UEdGraphSchema_K2::PC_SoftObject;
+		const int32 PropertyClassIndex = PropertyObject->GetIntegerField(TEXT("PropertyClass"));
+		OutSubCategoryObject = ObjectSerializer->DeserializeObject(PropertyClassIndex);
+		
 	} else if (FieldClass->IsChildOf(FObjectPropertyBase::StaticClass())) {
 		OutCategory = UEdGraphSchema_K2::PC_Object;
 		const int32 ObjectClassIndex = PropertyObject->GetIntegerField(TEXT("PropertyClass"));
@@ -248,15 +250,14 @@ void GetPropertyCategoryInfo(const TSharedPtr<FJsonObject> PropertyObject, FName
 		bOutIsWeakPointer = FieldClass->IsChildOf(FWeakObjectProperty::StaticClass());
 		
 	} else if (FieldClass->IsChildOf(FStructProperty::StaticClass())) {
+		OutCategory = UEdGraphSchema_K2::PC_Struct;
 		const int32 StructObjectIndex = PropertyObject->GetIntegerField(TEXT("Struct"));
-		auto DeserializedSturct = ObjectSerializer->DeserializeObject(StructObjectIndex);
-		UScriptStruct* Struct = dynamic_cast<UScriptStruct*>(DeserializedSturct);
-		if (!Struct)
-		{
-			UE_LOG(LogAssetGenerator, Warning, TEXT("The Property %s is not a initialized struct. declare the struct in the header file for it to work."), *ObjectName);
+		//UScriptStruct* Struct = CastChecked<UScriptStruct>(ObjectSerializer->DeserializeObject(StructObjectIndex));
+		UScriptStruct* Struct = dynamic_cast<UScriptStruct*>(ObjectSerializer->DeserializeObject(StructObjectIndex));
+		if (!Struct) {
+			UE_LOG(LogAssetGenerator, Warning, TEXT("The Property %s is not an initialized struct. Declare the struct in the header file for it to work."), *ObjectName);
 			return;
 		}
-		OutCategory = UEdGraphSchema_K2::PC_Struct;
 		OutSubCategoryObject = Struct;
 		
 		//Match IsTypeCompatibleWithProperty and erase REINST_ structs here:

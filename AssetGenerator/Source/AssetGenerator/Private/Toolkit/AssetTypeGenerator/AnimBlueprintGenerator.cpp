@@ -33,6 +33,69 @@ UBlueprint* UAnimBlueprintGenerator::CreateNewBlueprint(UPackage* Package, UClas
 	}
 	return FKismetEditorUtilities::CreateBlueprint(ParentClass, Package, GetAssetName(), BlueprintType, UAnimBlueprint::StaticClass(), UAnimBlueprintGeneratedClass::StaticClass());
 }
+
+void UAnimBlueprintGenerator::PopulateAssetWithData()
+{
+	UpdateDeserializerBlueprintClassObject(false);
+	
+	UAnimBlueprint* Blueprint = GetAsset<UAnimBlueprint>();
+	
+	const TSharedPtr<FJsonObject> AssetObjectData = GetAssetData()->GetObjectField(TEXT("AssetObjectData"));
+	const int32 TargetSkeletonIndex = AssetObjectData->GetIntegerField(TEXT("TargetSkeleton"));
+	USkeleton* TargetSkeleton = CastChecked<USkeleton>(GetObjectSerializer()->DeserializeObject(TargetSkeletonIndex));
+	if (TargetSkeleton) Blueprint->TargetSkeleton = TargetSkeleton;
+
+	/*const TArray<TSharedPtr<FJsonValue>>& ChildProperties = GetAssetData()->GetArrayField(TEXT("ChildProperties"));
+	const TArray<TSharedPtr<FJsonValue>>& Children = GetAssetData()->GetArrayField(TEXT("Children"));
+	const TArray<TSharedPtr<FJsonValue>>& GeneratedVariablesArray = GetAssetData()->GetArrayField(TEXT("GeneratedVariableNames"));
+
+	TSet<FName> GeneratedVariableNames;
+	for (const TSharedPtr<FJsonValue>& VariableName : GeneratedVariablesArray) {
+		GeneratedVariableNames.Add(*VariableName->AsString());
+	}
+	
+	TArray<FDeserializedProperty> Properties;
+	TMap<FName, FDeserializedFunction> FunctionMap;
+
+	for (int32 i = 0; i < ChildProperties.Num(); i++) {
+		const TSharedPtr<FJsonObject> PropertyObject = ChildProperties[i]->AsObject();
+		new (Properties) FDeserializedProperty(PropertyObject, GetObjectSerializer());
+	}
+
+	for (int32 i = 0; i < Children.Num(); i++) {
+		const TSharedPtr<FJsonObject> FunctionObject = Children[i]->AsObject();
+		FDeserializedFunction DeserializedFunction(FunctionObject, GetObjectSerializer(), true);
+		FunctionMap.Add(DeserializedFunction.FunctionName, MoveTemp(DeserializedFunction));
+	}
+
+	TArray<FDeserializedFunction> Functions;
+	FunctionMap.GenerateValueArray(Functions);
+
+	//Regenerate blueprint properties
+	const bool bChangedProperties = FBlueprintGeneratorUtils::CreateBlueprintVariablesForProperties(Blueprint, Properties, FunctionMap,
+		[&](const FDeserializedProperty& Property){
+		return !GeneratedVariableNames.Contains(Property.PropertyName);
+	});
+
+	//Force blueprint compilation after we have changed any properties
+	if (bChangedProperties) {
+		UpdateDeserializerBlueprintClassObject(true);
+		MarkAssetChanged();
+	}
+
+	//Rebuild any functions that blueprint has
+	const bool bChangedFunctions = FBlueprintGeneratorUtils::CreateNewBlueprintFunctions(Blueprint, Functions,
+		[&](const FDeserializedFunction& Function){
+			return true;
+	}, true);
+
+	//Recompile blueprint so all the function changed are visible
+	if (bChangedFunctions) {
+		UpdateDeserializerBlueprintClassObject(true);
+		MarkAssetChanged();
+	}*/
+}
+
 /*
 void UBlueprintGenerator::CreateAssetPackage() {
 	const int32 SuperStructIndex = GetAssetData()->GetIntegerField(TEXT("SuperStruct"));
@@ -123,64 +186,9 @@ void UBlueprintGenerator::PostConstructOrUpdateAsset(UBlueprint* Blueprint) {
 
 	//Recompile blueprint if asset has actually been changed
 	UpdateDeserializerBlueprintClassObject(HasAssetBeenEverChanged());
-}
+}*/
 
-void UBlueprintGenerator::PopulateAssetWithData() {
-	UpdateDeserializerBlueprintClassObject(false);
-	
-	UBlueprint* Blueprint = GetAsset<UBlueprint>();
-
-	const TArray<TSharedPtr<FJsonValue>>& ChildProperties = GetAssetData()->GetArrayField(TEXT("ChildProperties"));
-	const TArray<TSharedPtr<FJsonValue>>& Children = GetAssetData()->GetArrayField(TEXT("Children"));
-	const TArray<TSharedPtr<FJsonValue>>& GeneratedVariablesArray = GetAssetData()->GetArrayField(TEXT("GeneratedVariableNames"));
-
-	TSet<FName> GeneratedVariableNames;
-	for (const TSharedPtr<FJsonValue>& VariableName : GeneratedVariablesArray) {
-		GeneratedVariableNames.Add(*VariableName->AsString());
-	}
-	
-	TArray<FDeserializedProperty> Properties;
-	TMap<FName, FDeserializedFunction> FunctionMap;
-
-	for (int32 i = 0; i < ChildProperties.Num(); i++) {
-		const TSharedPtr<FJsonObject> PropertyObject = ChildProperties[i]->AsObject();
-		new (Properties) FDeserializedProperty(PropertyObject, GetObjectSerializer());
-	}
-
-	for (int32 i = 0; i < Children.Num(); i++) {
-		const TSharedPtr<FJsonObject> FunctionObject = Children[i]->AsObject();
-		FDeserializedFunction DeserializedFunction(FunctionObject, GetObjectSerializer(), true);
-		FunctionMap.Add(DeserializedFunction.FunctionName, MoveTemp(DeserializedFunction));
-	}
-
-	TArray<FDeserializedFunction> Functions;
-	FunctionMap.GenerateValueArray(Functions);
-
-	//Regenerate blueprint properties
-	const bool bChangedProperties = FBlueprintGeneratorUtils::CreateBlueprintVariablesForProperties(Blueprint, Properties, FunctionMap,
-		[&](const FDeserializedProperty& Property){
-		return !GeneratedVariableNames.Contains(Property.PropertyName);
-	});
-
-	//Force blueprint compilation after we have changed any properties
-	if (bChangedProperties) {
-		UpdateDeserializerBlueprintClassObject(true);
-		MarkAssetChanged();
-	}
-
-	//Rebuild any functions that blueprint has
-	const bool bChangedFunctions = FBlueprintGeneratorUtils::CreateNewBlueprintFunctions(Blueprint, Functions,
-		[&](const FDeserializedFunction& Function){
-			return true;
-	}, true);
-
-	//Recompile blueprint so all the function changed are visible
-	if (bChangedFunctions) {
-		UpdateDeserializerBlueprintClassObject(true);
-		MarkAssetChanged();
-	}
-}
-
+/*
 void UBlueprintGenerator::FinalizeAssetCDO() {
 	UpdateDeserializerBlueprintClassObject(false);
 	

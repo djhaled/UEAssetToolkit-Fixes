@@ -1,14 +1,11 @@
 #include "Toolkit/AssetTypeGenerator/SkeletalMeshGenerator.h"
 #include "AutomatedAssetImportData.h"
-#include "MeshDescription.h"
-#include "AssetToolsModule.h"
 #include "Dom/JsonObject.h"
 #include "Toolkit/ObjectHierarchySerializer.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Engine/SkeletalMesh.h"
 #include "Factories/FbxImportUI.h"
 #include "Factories/FbxSkeletalMeshImportData.h"
-#include "Factories/SkeletonFactory.h"
 #include "Factories/ReimportFbxSkeletalMeshFactory.h"
 #include "Modules/ModuleManager.h"
 #include "PhysicsEngine/BodySetup.h"
@@ -40,13 +37,12 @@ void USkeletalMeshGenerator::OnExistingPackageLoaded() {
 	}
 }
 
-USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) {
+USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, const FName& AssetName, const EObjectFlags ObjectFlags) const {
 	UFbxFactory* SkeletalMeshFactory = NewObject<UFbxFactory>(GetTransientPackage(), NAME_None);
-	UObject* ResultMesh;
-	
+		
 	SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
 	SkeletalMeshFactory->SetDetectImportTypeOnImport(false);
-
+	
 	SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, AssetName, Package);
 
 	FString AssetFbxFilePath;
@@ -57,13 +53,21 @@ USkeletalMesh* USkeletalMeshGenerator::ImportSkeletalMesh(UPackage* Package, con
 	}
 	
 	bool bOperationCancelled = false;
-	ResultMesh = SkeletalMeshFactory->ImportObject(USkeletalMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""), bOperationCancelled);
+	UObject* ResultMesh = SkeletalMeshFactory->ImportObject(USkeletalMesh::StaticClass(), Package, AssetName, ObjectFlags, AssetFbxFilePath, TEXT(""),bOperationCancelled);
         
 	checkf(ResultMesh, TEXT("Failed to import SkeletalMesh %s from FBX file %s. See log for errors"), *GetPackageName().ToString(), *AssetFbxFilePath);
 	checkf(ResultMesh->GetOuter() == Package, TEXT("Expected Outer to be package %s, found %s"), *Package->GetName(), *ResultMesh->GetOuter()->GetPathName());
 	checkf(ResultMesh->GetFName() == AssetName, TEXT("Expected Name to be %s, but found %s"), *AssetName.ToString(), *ResultMesh->GetName());
 	
-	return CastChecked<USkeletalMesh>(ResultMesh);
+	USkeletalMesh* ResultSkelMesh = CastChecked<USkeletalMesh>(ResultMesh);
+
+	UPhysicsAsset* PhysicsAsset = GetPhysicsAssetReference();
+	if (PhysicsAsset) {
+		PhysicsAsset->PreviewSkeletalMesh = ResultMesh;
+		PhysicsAsset->MarkPackageDirty();	
+	}
+	
+	return ResultSkelMesh;
 }
 
 void USkeletalMeshGenerator::ReimportSkeletalMeshSource(USkeletalMesh* Asset) {
@@ -71,9 +75,10 @@ void USkeletalMeshGenerator::ReimportSkeletalMeshSource(USkeletalMesh* Asset) {
 	
 	SkeletalMeshFactory->SetAutomatedAssetImportData(NewObject<UAutomatedAssetImportData>(SkeletalMeshFactory));
 	SkeletalMeshFactory->SetDetectImportTypeOnImport(false);
+	
 	SetupFbxImportSettings(SkeletalMeshFactory->ImportUI, GetAssetName(), Asset->
 #if ENGINE_MINOR_VERSION == 25
-	GetOutermost() 
+	GetOutermost()
 #else
 	GetPackage()
 #endif
@@ -88,28 +93,33 @@ void USkeletalMeshGenerator::ReimportSkeletalMeshSource(USkeletalMesh* Asset) {
 	
 	SkeletalMeshFactory->SetReimportPaths(Asset, {AssetFbxFilePath});
 	SkeletalMeshFactory->Reimport(Asset);
+
+	UPhysicsAsset* PhysicsAsset = GetPhysicsAssetReference();
+	if (PhysicsAsset) {
+		PhysicsAsset->PreviewSkeletalMesh = Asset;
+		PhysicsAsset->MarkPackageDirty();	
+	}
+	
 	MarkAssetChanged();
 }
 
-void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) {
+void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, const FName& AssetName, UPackage* Package) const {
 	ImportUI->MeshTypeToImport = FBXIT_SkeletalMesh;
 	ImportUI->bOverrideFullName = true;
 	ImportUI->bImportMaterials = false;
 	ImportUI->bImportTextures = false;
 	ImportUI->bImportAsSkeletal = true;
+	ImportUI->bImportAnimations = false;
 
 	if (!IsGeneratingPublicProject()) {
 		const int32 SkeletonObjectIndex = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("Skeleton"));
-		/*if (SkeletonObjectIndex == 0) {
-			FString SkeletonName = AssetName.ToString() + TEXT("_Skeleton");
-			FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools");
-			FString PackagePath = Package->GetPathName().LeftChop(AssetName.ToString().Len() + 1);
-			UObject* NewSkeleton = AssetToolsModule.Get().CreateAsset(SkeletonName, PackagePath, USkeleton::StaticClass(), NewObject<USkeletonFactory>());
-			ImportUI->Skeleton = CastChecked<USkeleton>(NewSkeleton);
-		} else {*/
-			USkeleton* Skeleton = CastChecked<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
+		USkeleton* Skeleton = Cast<USkeleton>(GetObjectSerializer()->DeserializeObject(SkeletonObjectIndex));	
+		if (Skeleton) {
 			ImportUI->Skeleton = Skeleton;
-		//}
+		} else {
+			UE_LOG(LogAssetGenerator, Warning, TEXT("Failed to find skeleton for SkeletalMesh %s. Using default skeleton"), *GetPackageName().ToString());
+			ImportUI->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
+		}
 	} else {
 		ImportUI->Skeleton = FPublicProjectStubHelper::DefaultSkeletalMeshSkeleton.GetObject();
 	}
@@ -120,8 +130,11 @@ void USkeletalMeshGenerator::SetupFbxImportSettings(UFbxImportUI* ImportUI, cons
 	ImportUI->SkeletalMeshImportData->bUpdateSkeletonReferencePose = false;
 
 	if (!IsGeneratingPublicProject()) {
-		//TODO here only until we implement physics asset generation
-		ImportUI->bCreatePhysicsAsset = true;
+		UPhysicsAsset* PhysicsAsset = GetPhysicsAssetReference();
+		if (PhysicsAsset) {
+			ImportUI->bCreatePhysicsAsset = false;
+			ImportUI->PhysicsAsset = PhysicsAsset;
+		}
 	}
 }
 
@@ -134,6 +147,12 @@ void USkeletalMeshGenerator::GetAdditionalPackagesToSave(TArray<UPackage*>& OutP
 	if (SkeletalMesh->PhysicsAsset) {
 		OutPackages.Add(SkeletalMesh->PhysicsAsset->GetOutermost());
 	}
+}
+
+UPhysicsAsset* USkeletalMeshGenerator::GetPhysicsAssetReference() const
+{
+	const int32 PhysicsAssetObjectIndex = GetAssetData()->GetObjectField(TEXT("AssetObjectData"))->GetIntegerField(TEXT("PhysicsAsset"));
+	return Cast<UPhysicsAsset>(GetObjectSerializer()->DeserializeObject(PhysicsAssetObjectIndex));
 }
 
 void USkeletalMeshGenerator::PopulateSkeletalMeshProperties(USkeletalMesh* Asset) {
